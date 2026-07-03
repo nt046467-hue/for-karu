@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f9d4c8"/>
+      <stop offset="50%" stop-color="#e8829a"/>
+      <stop offset="100%" stop-color="#c2506e"/>
+    </linearGradient>
+  </defs>
+  <!-- Ring band -->
+  <circle cx="16" cy="17" r="9" stroke="url(#rg)" stroke-width="2.2" fill="none"/>
+  <!-- Diamond on top -->
+  <path d="M16 6 L12.5 10 L16 8.2 L19.5 10 Z" fill="url(#rg)" stroke="url(#rg)" stroke-width="0.3" stroke-linejoin="round"/>
+  <!-- Sparkle left -->
+  <circle cx="6" cy="10" r="0.8" fill="#f9d4c8" opacity="0.6"/>
+  <!-- Sparkle right -->
+  <circle cx="26" cy="10" r="0.6" fill="#e8829a" opacity="0.5"/>
+</svg>

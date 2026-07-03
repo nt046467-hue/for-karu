@@ -29,8 +29,8 @@ export const TIMELINE = {
 export const COPY = {
   gate: {
     title: "For Karu",
-    subtitle: "A little something I made for you",
-    button: "Open",
+    subtitle: "You're going to want to see this",
+    button: "Show me",
   },
   intro: {
     lines: [
@@ -54,10 +54,10 @@ export const COPY = {
     ],
   },
   ring: {
-    openPrompt: "Tap to open",
+    openPrompt: "I have a surprise for you",
     proposal: "Karu, will you marry me?",
-    yesLabel: "Yes",
-    thinkLabel: "Let me think",
+    yesLabel: "Yes, forever",
+    thinkLabel: "Try saying no",
     finalLine: "I love you. Forever starts now.",
   },
 } as const;

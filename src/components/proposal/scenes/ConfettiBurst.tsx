@@ -5,16 +5,13 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 /**
- * ConfettiBurst — gold + white particle burst in 3D, fires on mount.
+ * ConfettiBurst — rose-gold + pink + white particle burst in 3D.
  *
- * Implementation: 200 particles spawned at origin with random outward
- * velocities, drifting outward + falling (gentle gravity) + fading out
- * over ~3 seconds.
- *
- * Velocities are stored in a mutable ref (not useMemo state) because we
- * mutate them every frame (gravity + air resistance).
+ * Fires on mount: 400 particles spawned at origin with random outward
+ * velocities, drifting outward + falling (gentle gravity) + fading out.
+ * Loops after 5s so the celebration feels continuous.
  */
-const PARTICLE_COUNT = 200;
+const PARTICLE_COUNT = 400;
 
 export function ConfettiBurst() {
   const pointsRef = useRef<THREE.Points>(null);
@@ -27,39 +24,44 @@ export function ConfettiBurst() {
     const sizes = new Float32Array(PARTICLE_COUNT);
     const velocities = new Float32Array(PARTICLE_COUNT * 3);
 
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      // Start at the ring's position (roughly)
-      positions[i * 3 + 0] = 0;
-      positions[i * 3 + 1] = 0.5;
-      positions[i * 3 + 2] = 0;
+    // Romantic color palette: rose, pink, ivory, gold
+    const palette = [
+      [0.914, 0.514, 0.604], // #e8829a rose
+      [0.976, 0.831, 0.784], // #f9d4c8 blush
+      [0.761, 0.314, 0.431], // #c2506e deep rose
+      [1.0,   0.84,  0.0  ], // gold
+      [1.0,   0.98,  0.94 ], // ivory
+      [1.0,   0.7,   0.8  ], // light pink
+    ];
 
-      // Random outward direction (sphere)
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      // Start near the ring's position
+      positions[i * 3 + 0] = (Math.random() - 0.5) * 0.4;
+      positions[i * 3 + 1] = 0.5 + (Math.random() - 0.5) * 0.3;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
+
+      // Random outward direction (sphere) with upward bias
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
-      const speed = 2 + Math.random() * 4;
+      const speed = 1.5 + Math.random() * 5;
       velocities[i * 3 + 0] = Math.sin(phi) * Math.cos(theta) * speed;
-      velocities[i * 3 + 1] = Math.cos(phi) * speed * 0.6 + 1.5; // bias upward
+      velocities[i * 3 + 1] = Math.abs(Math.cos(phi)) * speed * 0.7 + 1.8; // bias upward
       velocities[i * 3 + 2] = Math.sin(phi) * Math.sin(theta) * speed;
 
-      // Alternate gold and white
-      const isGold = Math.random() > 0.4;
-      if (isGold) {
-        colors[i * 3 + 0] = 1.0;
-        colors[i * 3 + 1] = 0.84;
-        colors[i * 3 + 2] = 0.0;
-      } else {
-        colors[i * 3 + 0] = 1.0;
-        colors[i * 3 + 1] = 0.98;
-        colors[i * 3 + 2] = 0.94;
-      }
+      // Pick a color from romantic palette
+      const col = palette[Math.floor(Math.random() * palette.length)];
+      colors[i * 3 + 0] = col[0];
+      colors[i * 3 + 1] = col[1];
+      colors[i * 3 + 2] = col[2];
 
-      sizes[i] = 0.05 + Math.random() * 0.12;
+      sizes[i] = 0.04 + Math.random() * 0.14;
     }
     return { positions, colors, sizes, velocities };
   }, []);
 
   // Mutable velocity store — ref so we can update in useFrame
   const velocitiesRef = useRef<Float32Array>(initial.velocities);
+  const positionsRef = useRef<Float32Array>(new Float32Array(initial.positions));
 
   useFrame(() => {
     if (!pointsRef.current) return;
@@ -76,16 +78,28 @@ export function ConfettiBurst() {
       pos[i * 3 + 1] += vel[i * 3 + 1] * dt;
       pos[i * 3 + 2] += vel[i * 3 + 2] * dt;
       // Gravity
-      vel[i * 3 + 1] -= 2.5 * dt;
-      // Air resistance
-      vel[i * 3 + 0] *= 0.985;
-      vel[i * 3 + 2] *= 0.985;
+      vel[i * 3 + 1] -= 2.8 * dt;
+      // Air resistance (more drag on X/Z = fluttery feel)
+      vel[i * 3 + 0] *= 0.982;
+      vel[i * 3 + 2] *= 0.982;
+
+      // Reset particles that fall too far — keeps celebration going
+      if (pos[i * 3 + 1] < -5) {
+        pos[i * 3 + 0] = (Math.random() - 0.5) * 0.4;
+        pos[i * 3 + 1] = 0.5;
+        pos[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
+        const theta = Math.random() * Math.PI * 2;
+        const speed = 1.5 + Math.random() * 4;
+        vel[i * 3 + 0] = Math.sin(theta) * speed;
+        vel[i * 3 + 1] = 1.5 + Math.random() * 3;
+        vel[i * 3 + 2] = Math.cos(theta) * speed;
+      }
     }
     pointsRef.current.geometry.attributes.position.needsUpdate = true;
 
-    // Fade out overall after 2.5s
+    // Fade in then keep stable (no fade-out — celebration persists)
     const mat = pointsRef.current.material as THREE.PointsMaterial;
-    mat.opacity = Math.max(0, 1 - elapsed / 3.5);
+    mat.opacity = Math.min(1, elapsed * 2);
   });
 
   return (
@@ -100,10 +114,10 @@ export function ConfettiBurst() {
       </bufferGeometry>
       <pointsMaterial
         vertexColors
-        size={0.18}
+        size={0.2}
         sizeAttenuation
         transparent
-        opacity={1}
+        opacity={0}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
       />
