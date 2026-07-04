@@ -4,33 +4,27 @@ import { useEffect, useState, useRef } from "react";
 import { useProposal } from "./state";
 import { useAudioController } from "./useAudio";
 import { COPY } from "@/lib/timeline";
-import { cn } from "@/lib/utils";
 
 /**
  * Overlay — all 2D UI text and buttons layered on top of the 3D canvas.
- *
- * Per-scene:
- *   - gate: "For Karu" + Open button (triggers audio + main timeline)
- *   - intro: lines fade in one-by-one
- *   - memories: no overlay (captions are 3D HTML inside the scene)
- *   - turn: pivot text lines fade in
- *   - ring-idle: "Tap to open" prompt
- *   - ring-open / ring-reveal: no overlay (let the ring breathe)
- *   - proposal: "Karu, will you marry me?" + Yes button + playful "Let me think"
- *   - answered: "I love you. Forever starts now."
- *
- * Plus: persistent MuteToggle in the top-right (visible after gate).
  */
 
 export function Overlay() {
   const phase = useProposal((s) => s.phase);
   const start = useProposal((s) => s.start);
   const setPhase = useProposal((s) => s.setPhase);
+  const reset = useProposal((s) => s.reset);
   const { playChime } = useAudioController();
+
+  // Always start from gate on fresh page load
+  useEffect(() => {
+    reset();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
-      {/* Persistent 2D layer — full screen, centered, all inline styles (no Tailwind) */}
+      {/* Persistent 2D layer — full screen, centered, all inline styles */}
       <div
         style={{
           pointerEvents: "none",
@@ -42,25 +36,11 @@ export function Overlay() {
           justifyContent: "center",
         }}
       >
-        {phase === "gate" && (
-          <GateScreen
-            onOpen={() => {
-              start();
-            }}
-          />
-        )}
+        {phase === "gate" && <GateScreen onOpen={() => { start(); }} />}
         {phase === "intro" && <IntroText />}
         {phase === "turn" && <TurnText />}
-        {phase === "ring-idle" && (
-          <RingIdlePrompt
-            onTap={() => {
-              setPhase("ring-open");
-            }}
-          />
-        )}
-        {phase === "proposal" && (
-          <ProposalUI onYes={() => setPhase("answered")} />
-        )}
+        {phase === "ring-idle" && <RingIdlePrompt onTap={() => { setPhase("ring-open"); }} />}
+        {phase === "proposal" && <ProposalUI onYes={() => setPhase("answered")} />}
         {phase === "answered" && <AnsweredScreen />}
       </div>
 
@@ -69,6 +49,7 @@ export function Overlay() {
     </>
   );
 }
+
 
 // ---------- Scene 0: Gate ----------
 
@@ -85,28 +66,21 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
     <div
       style={{
         pointerEvents: "auto",
+        position: "fixed",
+        inset: 0,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: "0",
         textAlign: "center",
-        width: "100vw",
-        height: "100vh",
         padding: "2rem",
         boxSizing: "border-box",
-        position: "relative",
+        zIndex: 100,
+        background: "radial-gradient(ellipse at 50% 60%, #1a0d1a 0%, #0a080f 50%, #000000 100%)",
       }}
     >
-      {/* Floating rose petal background decoration */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          overflow: "hidden",
-        }}
-      >
+      {/* Floating rose petal decoration */}
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
         {[...Array(16)].map((_, i) => (
           <span
             key={i}
@@ -137,17 +111,8 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
           transitionDelay: "0.2s",
         }}
       >
-        <svg
-          width="80"
-          height="80"
-          viewBox="0 0 54 54"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          style={{
-            filter:
-              "drop-shadow(0 0 24px rgba(232,130,154,0.9)) drop-shadow(0 0 50px rgba(232,130,154,0.4))",
-            animation: "heartBeat 2s ease-in-out infinite",
-          }}
+        <svg width="80" height="80" viewBox="0 0 54 54" fill="none"
+          style={{ filter: "drop-shadow(0 0 24px rgba(232,130,154,0.9)) drop-shadow(0 0 50px rgba(232,130,154,0.4))", animation: "heartBeat 2s ease-in-out infinite" }}
         >
           <defs>
             <linearGradient id="hg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -156,23 +121,15 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
               <stop offset="100%" stopColor="#c2506e" />
             </linearGradient>
           </defs>
-          <path
-            d="M27 46s-18-11-18-23a11 11 0 0 1 18-8.5A11 11 0 0 1 45 23c0 12-18 23-18 23z"
-            fill="url(#hg)"
-          />
-          <path
-            d="M22 18c-2.5 1-4.5 3.5-5 6"
-            stroke="rgba(255,255,255,0.4)"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
+          <path d="M27 46s-18-11-18-23a11 11 0 0 1 18-8.5A11 11 0 0 1 45 23c0 12-18 23-18 23z" fill="url(#hg)" />
+          <path d="M22 18c-2.5 1-4.5 3.5-5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       </div>
 
       {/* Title: For Karu */}
       <div
         style={{
-          marginBottom: "0.6rem",
+          marginBottom: "0.5rem",
           opacity: mounted ? 1 : 0,
           transform: mounted ? "translateY(0)" : "translateY(30px)",
           transition: "opacity 1.4s ease-out, transform 1.4s ease-out",
@@ -187,8 +144,7 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
             letterSpacing: "0.04em",
             lineHeight: 1.1,
             margin: 0,
-            textShadow:
-              "0 0 40px rgba(244,228,193,0.7), 0 0 80px rgba(232,130,154,0.35), 0 3px 6px rgba(0,0,0,0.9)",
+            textShadow: "0 0 40px rgba(244,228,193,0.7), 0 0 80px rgba(232,130,154,0.35), 0 3px 6px rgba(0,0,0,0.9)",
           }}
         >
           {COPY.gate.title}
@@ -208,21 +164,9 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
           margin: "0.8rem 0",
         }}
       >
-        <div
-          style={{
-            flex: 1,
-            height: "1px",
-            background: "linear-gradient(to right, transparent, rgba(232,130,154,0.5))",
-          }}
-        />
+        <div style={{ flex: 1, height: "1px", background: "linear-gradient(to right, transparent, rgba(232,130,154,0.5))" }} />
         <span style={{ color: "#e8829a", fontSize: "1.2rem", opacity: 0.9 }}>♡</span>
-        <div
-          style={{
-            flex: 1,
-            height: "1px",
-            background: "linear-gradient(to left, transparent, rgba(232,130,154,0.5))",
-          }}
-        />
+        <div style={{ flex: 1, height: "1px", background: "linear-gradient(to left, transparent, rgba(232,130,154,0.5))" }} />
       </div>
 
       {/* Subtitle */}
@@ -250,7 +194,7 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
         </p>
       </div>
 
-      {/* BIG centered romantic button */}
+      {/* Big centered romantic button */}
       <div
         style={{
           opacity: mounted ? 1 : 0,
@@ -268,63 +212,41 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
             alignItems: "center",
             justifyContent: "center",
             gap: "0.6rem",
-            position: "relative",
             padding: "1.2rem 5rem",
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontSize: "clamp(1.2rem, 3vw, 1.6rem)",
             fontStyle: "italic",
             letterSpacing: "0.15em",
-            color: "#fff4e0",
+            color: hovered ? "#2a0a14" : "#fff4e0",
             background: hovered
               ? "linear-gradient(135deg, #f9d4c8 0%, #e8829a 50%, #c2506e 100%)"
               : "linear-gradient(135deg, rgba(232,130,154,0.22) 0%, rgba(194,80,110,0.15) 100%)",
-            border: hovered
-              ? "1px solid rgba(255,255,255,0.4)"
-              : "1px solid rgba(232,130,154,0.5)",
+            border: hovered ? "1px solid rgba(255,255,255,0.4)" : "1px solid rgba(232,130,154,0.5)",
             borderRadius: "9999px",
             cursor: "pointer",
             backdropFilter: "blur(8px)",
             boxShadow: hovered
-              ? "0 0 60px rgba(232,130,154,0.7), 0 0 120px rgba(232,130,154,0.3), inset 0 1px 0 rgba(255,255,255,0.2)"
-              : "0 0 35px rgba(232,130,154,0.2), inset 0 1px 0 rgba(255,255,255,0.06)",
+              ? "0 0 60px rgba(232,130,154,0.7), 0 0 120px rgba(232,130,154,0.3)"
+              : "0 0 35px rgba(232,130,154,0.2)",
             transform: hovered ? "scale(1.06)" : "scale(1)",
             transition: "all 0.4s cubic-bezier(0.34,1.56,0.64,1)",
-            animation: "heartBeat 3s ease-in-out infinite",
           }}
         >
           <span style={{ fontSize: "1.3rem" }}>♡</span>
-          <span style={{ color: hovered ? "#2a0a14" : "#fff4e0" }}>{COPY.gate.button}</span>
+          <span>{COPY.gate.button}</span>
           <span style={{ fontSize: "1.3rem" }}>♡</span>
         </button>
       </div>
 
       {/* Sound hint */}
-      <div
-        style={{
-          marginTop: "1.8rem",
-          opacity: mounted ? 0.45 : 0,
-          transition: "opacity 1.4s ease-out",
-          transitionDelay: "2s",
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "Inter, sans-serif",
-            fontSize: "0.7rem",
-            color: "#8a7060",
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            margin: 0,
-          }}
-        >
+      <div style={{ marginTop: "1.8rem", opacity: mounted ? 0.45 : 0, transition: "opacity 1.4s ease-out", transitionDelay: "2s" }}>
+        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "0.7rem", color: "#8a7060", letterSpacing: "0.18em", textTransform: "uppercase", margin: 0 }}>
           🎵 Best with sound on
         </p>
       </div>
     </div>
   );
 }
-
-
 
 // ---------- Scene 1: Intro text ----------
 
@@ -423,63 +345,109 @@ function TurnText() {
 // ---------- Scene 4: Ring idle prompt ----------
 
 function RingIdlePrompt({ onTap }: { onTap: () => void }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
     <div
       style={{
         pointerEvents: "auto",
-        position: "absolute",
-        bottom: "12vh",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: "1rem",
+        justifyContent: "center",
+        gap: "1.5rem",
+        textAlign: "center",
+        width: "100%",
+        maxWidth: "480px",
+        padding: "2rem",
+        boxSizing: "border-box",
       }}
     >
       <p
         style={{
-          fontFamily: "Cormorant Garamond, Georgia, serif",
-          fontSize: "clamp(1rem, 3vw, 1.4rem)",
-          color: "#f4e4c1",
-          fontStyle: "italic",
-          letterSpacing: "0.1em",
+          fontFamily: "'Great Vibes', 'Cormorant Garamond', Georgia, serif",
+          fontSize: "clamp(2rem, 6vw, 3.2rem)",
+          color: "#fff4e0",
+          letterSpacing: "0.04em",
           margin: 0,
-          animation: "heartBeat 2s ease-in-out infinite",
-          textShadow: "0 0 20px rgba(232,130,154,0.4)",
+          textShadow: "0 0 30px rgba(232,130,154,0.6), 0 0 60px rgba(0,0,0,0.9)",
+          lineHeight: 1.2,
         }}
       >
         {COPY.ring.openPrompt}
       </p>
+
+      <p
+        style={{
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontSize: "clamp(0.95rem, 2.5vw, 1.2rem)",
+          color: "#d4a8b8",
+          fontStyle: "italic",
+          letterSpacing: "0.12em",
+          margin: "0 0 0.5rem 0",
+          opacity: 0.85,
+        }}
+      >
+        Tap the heart to open
+      </p>
+
       <button
         onClick={onTap}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         aria-label="Open the box"
         style={{
-          width: "72px",
-          height: "72px",
-          borderRadius: "50%",
-          border: "1.5px solid rgba(232,130,154,0.5)",
-          background: "radial-gradient(circle, rgba(232,130,154,0.2) 0%, transparent 70%)",
-          boxShadow: "0 0 30px rgba(232,130,154,0.3), 0 0 60px rgba(232,130,154,0.1)",
+          background: "transparent",
+          border: "none",
           cursor: "pointer",
-          transition: "all 0.3s ease",
+          outline: "none",
+          padding: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "2rem",
-          color: "#e8829a",
-          filter: "drop-shadow(0 0 10px rgba(232,130,154,0.7))",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "scale(1.15)";
-          e.currentTarget.style.borderColor = "rgba(232,130,154,0.9)";
-          e.currentTarget.style.boxShadow = "0 0 50px rgba(232,130,154,0.6), 0 0 100px rgba(232,130,154,0.2)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "scale(1)";
-          e.currentTarget.style.borderColor = "rgba(232,130,154,0.5)";
-          e.currentTarget.style.boxShadow = "0 0 30px rgba(232,130,154,0.3), 0 0 60px rgba(232,130,154,0.1)";
+          width: "120px",
+          height: "120px",
+          position: "relative",
+          transition: "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          transform: hovered ? "scale(1.15)" : "scale(1)",
         }}
       >
-        ♡
+        <div
+          style={{
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(232,130,154,0.3) 0%, transparent 70%)",
+            filter: "blur(5px)",
+            animation: "heartBeat 1.8s ease-in-out infinite",
+            opacity: hovered ? 1 : 0.7,
+            transition: "opacity 0.3s ease",
+          }}
+        />
+        <svg
+          width="90"
+          height="90"
+          viewBox="0 0 54 54"
+          fill="none"
+          style={{
+            filter: hovered
+              ? "drop-shadow(0 0 25px rgba(232,130,154,0.95)) drop-shadow(0 0 50px rgba(232,130,154,0.5))"
+              : "drop-shadow(0 0 15px rgba(232,130,154,0.7)) drop-shadow(0 0 30px rgba(232,130,154,0.2))",
+            transition: "filter 0.3s ease",
+            animation: "heartBeat 1.8s ease-in-out infinite",
+          }}
+        >
+          <defs>
+            <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#f9d4c8" />
+              <stop offset="50%" stopColor="#e8829a" />
+              <stop offset="100%" stopColor="#c2506e" />
+            </linearGradient>
+          </defs>
+          <path d="M27 46s-18-11-18-23a11 11 0 0 1 18-8.5A11 11 0 0 1 45 23c0 12-18 23-18 23z" fill="url(#heartGrad)" />
+          <path d="M22 18c-2.5 1-4.5 3.5-5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
       </button>
     </div>
   );
@@ -488,15 +456,12 @@ function RingIdlePrompt({ onTap }: { onTap: () => void }) {
 // ---------- Scene 5: Proposal ----------
 
 function ProposalUI({ onYes }: { onYes: () => void }) {
-  const [yesScale] = useState(1);
   const yesPulseRef = useRef<HTMLButtonElement>(null);
   const [thinkPos, setThinkPos] = useState({ x: 0, y: 0 });
   const [thinkOpacity, setThinkOpacity] = useState(0.5);
-  const [thinkScale, setThinkScale] = useState(1);
   const [thinkClicks, setThinkClicks] = useState(0);
   const [thinkGone, setThinkGone] = useState(false);
 
-  // Yes button gentle pulse loop
   useEffect(() => {
     let raf = 0;
     const start = performance.now();
@@ -512,7 +477,6 @@ function ProposalUI({ onYes }: { onYes: () => void }) {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // "Try saying no" — playful tease: dodges + shrinks on hover, gone after 2 attempts
   const dodge = () => {
     if (thinkGone) return;
     const next = thinkClicks + 1;
@@ -520,13 +484,10 @@ function ProposalUI({ onYes }: { onYes: () => void }) {
     const x = (Math.random() - 0.5) * 300;
     const y = (Math.random() - 0.5) * 160;
     setThinkPos({ x, y });
-    setThinkScale(Math.max(0.5, 1 - next * 0.25));
     setThinkOpacity(Math.max(0.15, 0.5 - next * 0.2));
     if (next >= 2) {
-      // After 2 dodges, fade out completely
       setTimeout(() => {
         setThinkOpacity(0);
-        setThinkScale(0.3);
         setTimeout(() => setThinkGone(true), 400);
       }, 250);
     }
@@ -556,7 +517,6 @@ function ProposalUI({ onYes }: { onYes: () => void }) {
           lineHeight: 1.3,
           margin: 0,
           textAlign: "center",
-          animation: "fadeIn 2s ease-out",
         }}
       >
         {COPY.ring.proposal}
@@ -567,28 +527,20 @@ function ProposalUI({ onYes }: { onYes: () => void }) {
           ref={yesPulseRef}
           onClick={onYes}
           style={{
-            transform: `scale(${yesScale})`,
-            background:
-              "linear-gradient(135deg, #f9d4c8 0%, #e8829a 50%, #c2506e 100%)",
+            background: "linear-gradient(135deg, #f9d4c8 0%, #e8829a 50%, #c2506e 100%)",
             color: "#2a0a14",
             fontFamily: "Cormorant Garamond, Georgia, serif",
             fontStyle: "italic",
             fontSize: "1.5rem",
             padding: "1rem 3.5rem",
             borderRadius: "9999px",
-            boxShadow:
-              "0 0 40px rgba(232,130,154,0.6), 0 0 80px rgba(232,130,154,0.25), inset 0 1px 0 rgba(255,255,255,0.3)",
+            boxShadow: "0 0 40px rgba(232,130,154,0.6), 0 0 80px rgba(232,130,154,0.25)",
             border: "1px solid rgba(255,255,255,0.25)",
+            cursor: "pointer",
             transition: "box-shadow 0.3s ease",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow =
-              "0 0 60px rgba(232,130,154,0.9), 0 0 120px rgba(232,130,154,0.45)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow =
-              "0 0 40px rgba(232,130,154,0.6), 0 0 80px rgba(232,130,154,0.25), inset 0 1px 0 rgba(255,255,255,0.3)";
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 0 60px rgba(232,130,154,0.9), 0 0 120px rgba(232,130,154,0.45)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 0 40px rgba(232,130,154,0.6), 0 0 80px rgba(232,130,154,0.25)"; }}
         >
           {COPY.ring.yesLabel}
         </button>
@@ -598,19 +550,18 @@ function ProposalUI({ onYes }: { onYes: () => void }) {
             onMouseEnter={dodge}
             onClick={dodge}
             style={{
-              transform: `translate(${thinkPos.x}px, ${thinkPos.y}px) scale(${thinkScale})`,
+              transform: `translate(${thinkPos.x}px, ${thinkPos.y}px)`,
               opacity: thinkOpacity,
               fontFamily: "Cormorant Garamond, Georgia, serif",
               fontStyle: "italic",
               fontSize: "0.85rem",
               color: "#a89a85",
               background: "transparent",
-              border: "1px solid rgba(168, 154, 133, 0.3)",
+              border: "1px solid rgba(168,154,133,0.3)",
               padding: "0.4rem 1rem",
               borderRadius: "9999px",
               cursor: "default",
-              transition:
-                "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease, scale 0.4s ease",
+              transition: "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease",
               pointerEvents: thinkClicks >= 2 ? "none" : "auto",
             }}
           >
@@ -626,7 +577,7 @@ function ProposalUI({ onYes }: { onYes: () => void }) {
 
 function AnsweredScreen() {
   const [step, setStep] = useState(0);
-  // Stagger reveal of each message
+
   useEffect(() => {
     const timers = [
       setTimeout(() => setStep(1), 400),
@@ -652,16 +603,8 @@ function AnsweredScreen() {
         maxWidth: "600px",
       }}
     >
-      {/* Floating hearts rain */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          pointerEvents: "none",
-          overflow: "hidden",
-          zIndex: -1,
-        }}
-      >
+      {/* Floating hearts */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: -1 }}>
         {[...Array(20)].map((_, i) => (
           <span
             key={i}
@@ -691,34 +634,19 @@ function AnsweredScreen() {
           marginBottom: "1.5rem",
         }}
       >
-        <div
-          style={{
-            fontSize: "4rem",
-            animation: "heartBeat 1.2s ease-in-out infinite",
-            filter: "drop-shadow(0 0 30px rgba(232,130,154,0.9)) drop-shadow(0 0 60px rgba(232,130,154,0.4))",
-            lineHeight: 1,
-          }}
-        >
+        <div style={{ fontSize: "4rem", animation: "heartBeat 1.2s ease-in-out infinite", filter: "drop-shadow(0 0 30px rgba(232,130,154,0.9))", lineHeight: 1 }}>
           ♥
         </div>
       </div>
 
-      {/* "She said Yes!" */}
-      <div
-        style={{
-          opacity: step >= 1 ? 1 : 0,
-          transform: step >= 1 ? "translateY(0)" : "translateY(30px)",
-          transition: "all 1s ease-out",
-          marginBottom: "1rem",
-        }}
-      >
+      {/* She said Yes! */}
+      <div style={{ opacity: step >= 1 ? 1 : 0, transform: step >= 1 ? "translateY(0)" : "translateY(30px)", transition: "all 1s ease-out", marginBottom: "1rem" }}>
         <h2
           style={{
             fontFamily: "'Great Vibes', Cormorant Garamond, Georgia, serif",
             fontSize: "clamp(2.4rem, 8vw, 4.5rem)",
             color: "#fff4e0",
-            textShadow:
-              "0 0 30px rgba(232,130,154,0.8), 0 0 60px rgba(232,130,154,0.4), 0 0 100px rgba(232,130,154,0.2)",
+            textShadow: "0 0 30px rgba(232,130,154,0.8), 0 0 60px rgba(232,130,154,0.4)",
             lineHeight: 1.1,
             margin: 0,
           }}
@@ -728,43 +656,15 @@ function AnsweredScreen() {
       </div>
 
       {/* Divider */}
-      <div
-        style={{
-          opacity: step >= 2 ? 1 : 0,
-          transition: "opacity 1s ease-out",
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          width: "260px",
-          margin: "0.8rem 0",
-        }}
-      >
+      <div style={{ opacity: step >= 2 ? 1 : 0, transition: "opacity 1s ease-out", display: "flex", alignItems: "center", gap: "10px", width: "260px", margin: "0.8rem 0" }}>
         <div style={{ flex: 1, height: "1px", background: "linear-gradient(to right, transparent, rgba(232,130,154,0.6))" }} />
         <span style={{ color: "#e8829a", fontSize: "0.8rem" }}>♡</span>
         <div style={{ flex: 1, height: "1px", background: "linear-gradient(to left, transparent, rgba(232,130,154,0.6))" }} />
       </div>
 
-      {/* "I love you. Forever starts now." */}
-      <div
-        style={{
-          opacity: step >= 2 ? 1 : 0,
-          transform: step >= 2 ? "translateY(0)" : "translateY(20px)",
-          transition: "all 1.2s ease-out",
-          marginBottom: "1.2rem",
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "Cormorant Garamond, Georgia, serif",
-            fontSize: "clamp(1.1rem, 3vw, 1.5rem)",
-            color: "#f4e4c1",
-            fontStyle: "italic",
-            letterSpacing: "0.04em",
-            textShadow: "0 0 20px rgba(0,0,0,0.8)",
-            margin: 0,
-            lineHeight: 1.6,
-          }}
-        >
+      {/* Final line */}
+      <div style={{ opacity: step >= 2 ? 1 : 0, transform: step >= 2 ? "translateY(0)" : "translateY(20px)", transition: "all 1.2s ease-out", marginBottom: "1.2rem" }}>
+        <p style={{ fontFamily: "Cormorant Garamond, Georgia, serif", fontSize: "clamp(1.1rem, 3vw, 1.5rem)", color: "#f4e4c1", fontStyle: "italic", letterSpacing: "0.04em", margin: 0, lineHeight: 1.6 }}>
           {COPY.ring.finalLine}
         </p>
       </div>
@@ -791,16 +691,7 @@ function AnsweredScreen() {
             width: "100%",
           }}
         >
-          <p
-            style={{
-              fontFamily: "Cormorant Garamond, Georgia, serif",
-              fontSize: "clamp(0.9rem, 2.5vw, 1.05rem)",
-              color: "#d4a8b8",
-              fontStyle: "italic",
-              margin: 0,
-              lineHeight: 1.5,
-            }}
-          >
+          <p style={{ fontFamily: "Cormorant Garamond, Georgia, serif", fontSize: "clamp(0.9rem, 2.5vw, 1.05rem)", color: "#d4a8b8", fontStyle: "italic", margin: 0, lineHeight: 1.5 }}>
             <span style={{ marginRight: "0.5rem" }}>{msg.emoji}</span>
             {msg.text}
           </p>
@@ -864,16 +755,7 @@ function MuteToggle() {
         e.currentTarget.style.boxShadow = "0 0 14px rgba(232,130,154,0.1)";
       }}
     >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#e8829a"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e8829a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         {audioEnabled ? (
           <>
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />

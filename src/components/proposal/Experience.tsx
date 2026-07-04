@@ -2,7 +2,6 @@
 
 import { Suspense, useMemo, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import { EffectComposer, Bloom, Vignette, DepthOfField } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { useProposal } from "./state";
 import { useTimelineController } from "./useTimelineController";
@@ -79,26 +78,6 @@ export function Experience() {
         )}
         {showConfetti && <ConfettiBurst />}
 
-        {/* Post-processing — PRD §2 */}
-        <EffectComposer multisampling={caps.isMobile ? 0 : 4}>
-          {/* PRD §4.5: Bloom so sparkle points and light hits actually glow */}
-          <Bloom
-            intensity={caps.isMobile ? 0.8 : 1.2}
-            luminanceThreshold={0.4}
-            luminanceSmoothing={0.9}
-            mipmapBlur
-          />
-          {/* Subtle vignette for cinematic framing */}
-          <Vignette eskil={false} offset={0.25} darkness={0.65} />
-          {/* DepthOfField only on desktop — expensive on mobile */}
-          {!caps.isMobile && phase !== "gate" && (
-            <DepthOfField
-              focusDistance={0.02}
-              focalLength={0.05}
-              bokehScale={2.5}
-            />
-          )}
-        </EffectComposer>
       </Suspense>
     </Canvas>
   );

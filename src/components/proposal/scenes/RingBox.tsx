@@ -43,13 +43,14 @@ export function RingBox({ autoOpen = false }: RingBoxProps) {
     });
   }, []);
 
-  // Gold trim around the lid edge
+  // Gold trim around the lid edge — use standard material so it works without envMap
   const trimMaterial = useMemo(() => {
-    return new THREE.MeshPhysicalMaterial({
+    return new THREE.MeshStandardMaterial({
       color: new THREE.Color("#FFD700"),
-      metalness: 1.0,
-      roughness: 0.25,
-      envMapIntensity: 1.5,
+      metalness: 0.9,
+      roughness: 0.2,
+      emissive: new THREE.Color("#7a5800"),
+      emissiveIntensity: 0.15,
     });
   }, []);
 

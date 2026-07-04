@@ -1,22 +1,16 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useProposal } from "@/components/proposal/state";
+import { useEffect } from "react";
 
-// Dynamically import the Experience so it only renders on the client
-// (R3F + WebGL can't run during SSR). Loading fallback renders a black
-// screen so there's never a white flash during initial hydration.
+// Dynamically import so WebGL only loads on client
 const Experience = dynamic(
   () => import("@/components/proposal/Experience").then((m) => m.Experience),
   {
     ssr: false,
     loading: () => (
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "#000000",
-        }}
-      />
+      <div style={{ position: "fixed", inset: 0, background: "#000000" }} />
     ),
   }
 );
@@ -30,6 +24,12 @@ const Overlay = dynamic(
 );
 
 export default function Home() {
+  // Force reset to gate on every page load — prevents HMR stale state
+  const reset = useProposal((s) => s.reset);
+  useEffect(() => {
+    reset();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <main
       style={{

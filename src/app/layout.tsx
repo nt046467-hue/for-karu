@@ -10,8 +10,8 @@ import { Toaster } from "@/components/ui/toaster";
 // browser, so the build never depends on network access.
 
 export const metadata: Metadata = {
-  title: "For Karu",
-  description: "A little something I made for you.",
+  title: "For Karu — With All My Love",
+  description: "A little something I made just for you, my love.",
   icons: {
     icon: "/icon.svg",
   },
@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-
+        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

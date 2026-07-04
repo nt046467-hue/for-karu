@@ -9,21 +9,21 @@
 export const TIMELINE = {
   // Scene 1 — Intro
   introStart: 0,
-  introEnd: 18,
+  introEnd: 8,
 
   // Scene 2 — Memories (photo stream)
-  memoriesStart: 18,
-  memoriesEnd: 58,
+  memoriesStart: 8,
+  memoriesEnd: 30,
 
   // Scene 3 — The Turn (emotional pivot)
-  turnStart: 58,
-  turnEnd: 76,
+  turnStart: 30,
+  turnEnd: 41,
 
   // Scene 4 — Ring box reveal (waits for user tap, so end is open-ended)
-  ringStart: 76,
+  ringStart: 41,
 
   // Per-photo cadence in the memory stream
-  photoInterval: 6.5,
+  photoInterval: 5,
 } as const;
 
 export const COPY = {

@@ -3,21 +3,21 @@
 import { create } from "zustand";
 
 export type Phase =
-  | "gate" // Scene 0 — black screen with "Open" button
-  | "intro" // Scene 1 — starfield + intro lines
-  | "memories" // Scene 2 — photo stream
-  | "turn" // Scene 3 — emotional pivot
-  | "ring-idle" // Scene 4 — box visible, waiting for tap
-  | "ring-open" // Scene 4 — box opening, ring rising
-  | "ring-reveal" // Scene 4 — ring fully revealed, rotating
-  | "proposal" // Scene 5 — proposal text + Yes button visible
-  | "answered"; // Scene 5 — Yes clicked, confetti + final line
+  | "gate"       // Scene 0 — opening screen
+  | "intro"      // Scene 1 — starfield + intro lines
+  | "memories"   // Scene 2 — photo stream
+  | "turn"       // Scene 3 — emotional pivot
+  | "ring-idle"  // Scene 4 — box visible, waiting for tap
+  | "ring-open"  // Scene 4 — box opening, ring rising
+  | "ring-reveal"// Scene 4 — ring fully revealed, rotating
+  | "proposal"   // Scene 5 — proposal text + Yes button
+  | "answered";  // Scene 5 — Yes clicked, confetti + final line
 
 interface ProposalState {
   phase: Phase;
   audioEnabled: boolean;
   audioStarted: boolean;
-  startedAt: number | null; // performance.now() ms when timeline began
+  startedAt: number | null;
   setPhase: (p: Phase) => void;
   start: () => void;
   toggleAudio: () => void;
@@ -25,18 +25,23 @@ interface ProposalState {
 }
 
 export const useProposal = create<ProposalState>((set, get) => ({
+  // Always start from gate — no persistence
   phase: "gate",
   audioEnabled: true,
   audioStarted: false,
   startedAt: null,
+
   setPhase: (p) => set({ phase: p }),
+
   start: () =>
     set({
       phase: "intro",
       audioStarted: true,
       startedAt: performance.now(),
     }),
+
   toggleAudio: () => set({ audioEnabled: !get().audioEnabled }),
+
   reset: () =>
     set({
       phase: "gate",

@@ -2,7 +2,7 @@
 
 import { useRef, useMemo, useEffect, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Environment, Sparkles } from "@react-three/drei";
+import { Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 import gsap from "gsap";
 import { useProposal } from "../state";
@@ -108,28 +108,32 @@ export function RingScene() {
 
   return (
     <group>
-      {/* Environment for reflections — single biggest realism upgrade */}
-      <Environment preset="studio" />
-
-      {/* Lighting (PRD §4.4) */}
-      {/* Key spotlight from top-front, warm white, intensity 2 */}
+      {/* Lighting — manual setup so we don't depend on network HDRI */}
+      {/* Key spotlight from top-front, warm white */}
       <spotLight
         position={[3, 6, 4]}
         angle={0.5}
         penumbra={0.6}
-        intensity={2.5}
+        intensity={3}
         color="#fff4e0"
         distance={20}
       />
-      {/* Soft rim light from behind, cool blue-white, low intensity */}
+      {/* Soft rim light from behind, cool blue-white */}
       <pointLight
         position={[-4, 2, -4]}
-        intensity={0.6}
+        intensity={1.2}
         color="#c4d8ff"
         distance={15}
       />
-      {/* Very low ambient fill so background stays dark */}
-      <ambientLight intensity={0.12} color="#ffffff" />
+      {/* Front fill light so box faces are visible */}
+      <pointLight
+        position={[0, 1, 5]}
+        intensity={1.5}
+        color="#fff8f0"
+        distance={12}
+      />
+      {/* Ambient fill — enough to see everything */}
+      <ambientLight intensity={0.5} color="#ffffff" />
 
       {/* The box (with idle rotation parent group) */}
       <group ref={boxRef} position={[0, 0, 0]}>
