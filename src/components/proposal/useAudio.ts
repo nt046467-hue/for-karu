@@ -6,56 +6,68 @@ import { AUDIO } from "@/lib/timeline";
 import { useProposal } from "./state";
 
 /**
- * Audio controller hook.
+ * Audio controller hook — singleton pattern.
+ *
+ * Module-level refs ensure only ONE Howl instance ever exists for background
+ * and chime, no matter how many components call useAudioController().
+ * This prevents double-audio when e.g. RingScene and Experience both call it.
  *
  * Browsers block audio autoplay until a user gesture. The Gate screen tap
- * counts as that gesture, so we lazily instantiate the Howl on first start()
- * call and play it immediately.
+ * counts as that gesture, so we lazily instantiate on first start() call.
  *
- * If the audio files are missing (404), Howler fails silently — the experience
- * continues without sound. This is intentional: silence is better than a
- * broken moment.
+ * If audio files are missing (404), Howler fails silently — silence > broken.
  */
+
+// Module-level singletons — shared across all hook instances
+let _bgHowl: Howl | null = null;
+let _chimeHowl: Howl | null = null;
+let _bgStarted = false;
+
 export function useAudioController() {
-  const bgRef = useRef<Howl | null>(null);
-  const chimeRef = useRef<Howl | null>(null);
   const audioStarted = useProposal((s) => s.audioStarted);
   const audioEnabled = useProposal((s) => s.audioEnabled);
 
-  // Lazily load + play background track when user passes the gate
+  // Lazily load + play background track when user passes the gate.
+  // When audioStarted resets to false (user goes back to gate), stop and clean up.
   useEffect(() => {
-    if (!audioStarted) return;
-    if (bgRef.current) return;
+    if (!audioStarted) {
+      // Reset happened — stop existing audio and clear singleton so it can restart
+      if (_bgHowl) { _bgHowl.stop(); _bgHowl.unload(); _bgHowl = null; }
+      if (_chimeHowl) { _chimeHowl.unload(); _chimeHowl = null; }
+      _bgStarted = false;
+      return;
+    }
+    if (_bgStarted) return; // already started — don't create a second instance
+    _bgStarted = true;
 
-    bgRef.current = new Howl({
+    _bgHowl = new Howl({
       src: [AUDIO.background],
       loop: true,
       volume: 0.0,
       html5: true, // stream-friendly on mobile
       onloaderror: () => {
-        // File missing — fail silently
-        bgRef.current = null;
+        _bgHowl = null;
       },
       onplayerror: () => {
         // Some browsers need a second user gesture; ignore
       },
     });
-    bgRef.current.play();
-    bgRef.current.fade(0, 0.45, 2500);
+    _bgHowl.play();
+    _bgHowl.fade(0, 0.45, 2500);
 
-    chimeRef.current = new Howl({
+    _chimeHowl = new Howl({
       src: [AUDIO.chime],
       volume: 0.6,
       html5: true,
       onloaderror: () => {
-        chimeRef.current = null;
+        _chimeHowl = null;
       },
     });
   }, [audioStarted]);
 
   // Mute / unmute in response to UI toggle
   useEffect(() => {
-    const bg = bgRef.current;
+    const bg = _bgHowl;
     if (!bg) return;
     if (audioEnabled) {
       bg.fade(bg.volume(), 0.45, 400);
@@ -65,8 +77,8 @@ export function useAudioController() {
   }, [audioEnabled]);
 
   const playChime = useCallback(() => {
-    const chime = chimeRef.current;
-    const bg = bgRef.current;
+    const chime = _chimeHowl;
+    const bg = _bgHowl;
     if (chime && useProposal.getState().audioEnabled) {
       chime.play();
     }

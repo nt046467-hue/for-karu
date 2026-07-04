@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useProposal } from "./state";
 import { useAudioController } from "./useAudio";
-import { COPY } from "@/lib/timeline";
+import { COPY, PHOTOS } from "@/lib/timeline";
 
 /**
  * Overlay — all 2D UI text and buttons layered on top of the 3D canvas.
@@ -43,6 +43,9 @@ export function Overlay() {
         {phase === "proposal" && <ProposalUI onYes={() => setPhase("answered")} />}
         {phase === "answered" && <AnsweredScreen />}
       </div>
+
+      {/* Memories overlay — full-screen polaroid carousel */}
+      {phase === "memories" && <MemoriesOverlay />}
 
       {/* Mute toggle — visible from intro onwards */}
       {phase !== "gate" && <MuteToggle />}
@@ -248,6 +251,196 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
   );
 }
 
+// ---------- Scene 2: Memories — Polaroid photo carousel ----------
+
+function MemoriesOverlay() {
+  const [current, setCurrent] = useState(0);
+  const [visible, setVisible] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [captionVisible, setCaptionVisible] = useState(false);
+  const photos = PHOTOS as unknown as { src: string; caption: string }[];
+
+  useEffect(() => {
+    // Fade in the first photo
+    const t0 = setTimeout(() => setVisible(true), 300);
+    const t1 = setTimeout(() => setCaptionVisible(true), 1200);
+    return () => { clearTimeout(t0); clearTimeout(t1); };
+  }, []);
+
+  useEffect(() => {
+    if (current >= photos.length - 1) return;
+    const interval = setTimeout(() => {
+      // Start leaving animation
+      setLeaving(true);
+      setCaptionVisible(false);
+      setTimeout(() => {
+        setCurrent((c) => c + 1);
+        setLeaving(false);
+        setVisible(false);
+        setTimeout(() => setVisible(true), 80);
+        setTimeout(() => setCaptionVisible(true), 900);
+      }, 700);
+    }, 3200);
+    return () => clearTimeout(interval);
+  }, [current, photos.length]);
+
+  const photo = photos[current];
+  // Slight random tilt per photo for polaroid realism
+  const tiltAngles = [-2.5, 1.8, -1.2, 2.8, -0.8];
+  const tilt = tiltAngles[current % tiltAngles.length];
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 15,
+        pointerEvents: "none",
+      }}
+    >
+      {/* Progress dots */}
+      <div
+        style={{
+          position: "absolute",
+          top: "2rem",
+          display: "flex",
+          gap: "8px",
+          zIndex: 20,
+        }}
+      >
+        {photos.map((_, i) => (
+          <div
+            key={i}
+            style={{
+              width: i === current ? "24px" : "8px",
+              height: "8px",
+              borderRadius: "9999px",
+              background: i === current
+                ? "linear-gradient(90deg, #f9d4c8, #e8829a)"
+                : "rgba(232,130,154,0.3)",
+              transition: "all 0.5s cubic-bezier(0.34,1.56,0.64,1)",
+              boxShadow: i === current ? "0 0 10px rgba(232,130,154,0.6)" : "none",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Polaroid card */}
+      <div
+        style={{
+          position: "relative",
+          opacity: visible ? 1 : 0,
+          transform: leaving
+            ? `rotate(${tilt + 8}deg) translateY(-30px) scale(0.88)`
+            : visible
+            ? `rotate(${tilt}deg) translateY(0px) scale(1)`
+            : `rotate(${tilt - 6}deg) translateY(40px) scale(0.92)`,
+          transition: leaving
+            ? "all 0.65s cubic-bezier(0.4,0,0.2,1)"
+            : "all 0.8s cubic-bezier(0.34,1.56,0.64,1)",
+          // Polaroid white frame
+          background: "#fffdf8",
+          padding: "12px 12px 52px 12px",
+          borderRadius: "4px",
+          boxShadow:
+            "0 30px 80px rgba(0,0,0,0.7), 0 8px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08), inset 0 0 0 1px rgba(0,0,0,0.06)",
+          maxWidth: "min(340px, 80vw)",
+          width: "100%",
+        }}
+      >
+        {/* Photo */}
+        <div
+          style={{
+            width: "100%",
+            aspectRatio: "4 / 3",
+            overflow: "hidden",
+            borderRadius: "2px",
+            background: "#1a1014",
+            position: "relative",
+          }}
+        >
+          <img
+            key={photo.src}
+            src={photo.src}
+            alt={photo.caption}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+              borderRadius: "2px",
+            }}
+          />
+          {/* Subtle inner vignette */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.25) 100%)",
+              pointerEvents: "none",
+            }}
+          />
+        </div>
+
+        {/* Caption inside polaroid white strip */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "52px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 12px",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "'Dancing Script', 'Caveat', 'Segoe Script', Georgia, serif",
+              fontSize: "clamp(0.85rem, 2.5vw, 1.05rem)",
+              color: "#3a2020",
+              textAlign: "center",
+              margin: 0,
+              lineHeight: 1.3,
+              opacity: captionVisible ? 1 : 0,
+              transform: captionVisible ? "translateY(0)" : "translateY(6px)",
+              transition: "all 0.8s ease-out",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              maxWidth: "100%",
+            }}
+          >
+            {photo.caption}
+          </p>
+        </div>
+      </div>
+
+      {/* Photo counter */}
+      <div
+        style={{
+          marginTop: "2rem",
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontSize: "0.8rem",
+          color: "rgba(244,228,193,0.5)",
+          letterSpacing: "0.2em",
+          fontStyle: "italic",
+          opacity: visible ? 1 : 0,
+          transition: "opacity 1s ease-out 0.5s",
+        }}
+      >
+        {current + 1} of {photos.length}
+      </div>
+    </div>
+  );
+}
+
 // ---------- Scene 1: Intro text ----------
 
 function IntroText() {
@@ -388,7 +581,7 @@ function RingIdlePrompt({ onTap }: { onTap: () => void }) {
           opacity: 0.85,
         }}
       >
-        Tap the heart to open
+        Touch the hearts ♡
       </p>
 
       <button

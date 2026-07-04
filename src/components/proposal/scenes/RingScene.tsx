@@ -8,7 +8,7 @@ import gsap from "gsap";
 import { useProposal } from "../state";
 import { detectCapabilities } from "@/lib/proposal/capabilities";
 import { Ring } from "./Ring";
-import { RingBox } from "./RingBox";
+import { LoveHeart } from "./LoveHeart";
 import { useAudioController } from "../useAudio";
 
 /**
@@ -28,14 +28,12 @@ export function RingScene() {
   const phase = useProposal((s) => s.phase);
   const setPhase = useProposal((s) => s.setPhase);
   const ringGroupRef = useRef<THREE.Group>(null);
-  const boxRef = useRef<THREE.Group>(null);
   const camera = useThree((s) => s.camera);
   const caps = useMemo(() => detectCapabilities(), []);
   const { playChime } = useAudioController();
 
   // Local animation state
   const [revealed, setRevealed] = useState(false);
-  const idleRotation = useRef(0);
   const reveal360Progress = useRef(0); // 0..1 for the one-shot 360° rotation
   const reveal360Active = useRef(false);
 
@@ -86,11 +84,8 @@ export function RingScene() {
     }
   }, [phase, camera]);
 
-  // --- Idle box rotation (PRD §4.6 step 1: 0.1 rad/s when closed) ---
+  // LoveHeart self-animates; only handle the one-shot 360° ring reveal
   useFrame((_, dt) => {
-    if (boxRef.current && phase === "ring-idle") {
-      boxRef.current.rotation.y += dt * 0.1;
-    }
     // One-shot 360° rotation for the ring after it rises (PRD §4.6 step 4)
     if (reveal360Active.current && ringGroupRef.current) {
       const duration = 2.5;
@@ -135,9 +130,9 @@ export function RingScene() {
       {/* Ambient fill — enough to see everything */}
       <ambientLight intensity={0.5} color="#ffffff" />
 
-      {/* The box (with idle rotation parent group) */}
-      <group ref={boxRef} position={[0, 0, 0]}>
-        <RingBox />
+      {/* Love hearts cluster — replaces the ring box */}
+      <group position={[0, 0, 0]}>
+        <LoveHeart />
       </group>
 
       {/* The ring — starts hidden inside the box (low Y), rises when phase = ring-open */}
