@@ -36,11 +36,11 @@ const TARGETS: Record<string, CameraTarget> = {
   // the dedicated drift logic in useFrame below for the rest of the phase.
   memories: { position: [0, 0, 2], lookAt: [0, 0, -6], fov: 55 },
   turn: { position: [0, 0.5, 5], lookAt: [0, 0, -5], fov: 50 },
-  "ring-idle": { position: [0, 1.5, 5.5], lookAt: [0, 0, 0], fov: 50 },
-  "ring-open": { position: [0, 1.5, 5.0], lookAt: [0, 0.5, 0], fov: 46 },
-  "ring-reveal": { position: [0, 1.8, 4.2], lookAt: [0, 0.8, 0], fov: 44 },
-  proposal: { position: [0, 2.0, 4.0], lookAt: [0, 0.8, 0], fov: 42 },
-  answered: { position: [0, 2.5, 5.0], lookAt: [0, 1.0, 0], fov: 45 },
+  "ring-idle":   { position: [0, 1.8, 5.2], lookAt: [0, -0.1, 0], fov: 50 },
+  "ring-open":   { position: [0, 1.8, 4.8], lookAt: [0, 0.4, 0],  fov: 46 },
+  "ring-reveal": { position: [0, 2.2, 4.0], lookAt: [0, 0.8, 0],  fov: 44 },
+  proposal:      { position: [0, 2.4, 3.8], lookAt: [0, 0.8, 0],  fov: 42 },
+  answered:      { position: [0, 2.8, 5.0], lookAt: [0, 1.0, 0],  fov: 45 },
 };
 
 // How far ahead of the camera to aim the lookAt target while drifting

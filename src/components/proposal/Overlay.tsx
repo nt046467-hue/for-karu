@@ -19,7 +19,7 @@ export function Overlay() {
   // Always start from gate on fresh page load
   useEffect(() => {
     reset();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -36,11 +36,25 @@ export function Overlay() {
           justifyContent: "center",
         }}
       >
-        {phase === "gate" && <GateScreen onOpen={() => { start(); }} />}
+        {phase === "gate" && (
+          <GateScreen
+            onOpen={() => {
+              start();
+            }}
+          />
+        )}
         {phase === "intro" && <IntroText />}
         {phase === "turn" && <TurnText />}
-        {phase === "ring-idle" && <RingIdlePrompt onTap={() => { setPhase("ring-open"); }} />}
-        {phase === "proposal" && <ProposalUI onYes={() => setPhase("answered")} />}
+        {phase === "ring-idle" && (
+          <RingIdlePrompt
+            onTap={() => {
+              setPhase("ring-open");
+            }}
+          />
+        )}
+        {phase === "proposal" && (
+          <ProposalUI onYes={() => setPhase("answered")} />
+        )}
         {phase === "answered" && <AnsweredScreen />}
       </div>
 
@@ -52,7 +66,6 @@ export function Overlay() {
     </>
   );
 }
-
 
 // ---------- Scene 0: Gate ----------
 
@@ -79,11 +92,19 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
         padding: "2rem",
         boxSizing: "border-box",
         zIndex: 100,
-        background: "radial-gradient(ellipse at 50% 60%, #1a0d1a 0%, #0a080f 50%, #000000 100%)",
+        background:
+          "radial-gradient(ellipse at 50% 60%, #1a0d1a 0%, #0a080f 50%, #000000 100%)",
       }}
     >
       {/* Floating rose petal decoration */}
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          overflow: "hidden",
+        }}
+      >
         {[...Array(16)].map((_, i) => (
           <span
             key={i}
@@ -91,7 +112,8 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
               position: "absolute",
               left: `${5 + i * 5.8}%`,
               top: `${8 + (i % 5) * 18}%`,
-              fontSize: i % 3 === 0 ? "1.4rem" : i % 3 === 1 ? "0.9rem" : "1.1rem",
+              fontSize:
+                i % 3 === 0 ? "1.4rem" : i % 3 === 1 ? "0.9rem" : "1.1rem",
               opacity: 0.1 + (i % 5) * 0.05,
               animation: `floatPetal ${4 + (i % 5) * 0.6}s ease-in-out infinite`,
               animationDelay: `${(i * 0.4) % 3}s`,
@@ -110,12 +132,21 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
           marginBottom: "1.5rem",
           opacity: mounted ? 1 : 0,
           transform: mounted ? "scale(1)" : "scale(0.4)",
-          transition: "opacity 1.2s ease-out, transform 1.2s cubic-bezier(0.34,1.56,0.64,1)",
+          transition:
+            "opacity 1.2s ease-out, transform 1.2s cubic-bezier(0.34,1.56,0.64,1)",
           transitionDelay: "0.2s",
         }}
       >
-        <svg width="80" height="80" viewBox="0 0 54 54" fill="none"
-          style={{ filter: "drop-shadow(0 0 24px rgba(232,130,154,0.9)) drop-shadow(0 0 50px rgba(232,130,154,0.4))", animation: "heartBeat 2s ease-in-out infinite" }}
+        <svg
+          width="80"
+          height="80"
+          viewBox="0 0 54 54"
+          fill="none"
+          style={{
+            filter:
+              "drop-shadow(0 0 24px rgba(232,130,154,0.9)) drop-shadow(0 0 50px rgba(232,130,154,0.4))",
+            animation: "heartBeat 2s ease-in-out infinite",
+          }}
         >
           <defs>
             <linearGradient id="hg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -124,8 +155,16 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
               <stop offset="100%" stopColor="#c2506e" />
             </linearGradient>
           </defs>
-          <path d="M27 46s-18-11-18-23a11 11 0 0 1 18-8.5A11 11 0 0 1 45 23c0 12-18 23-18 23z" fill="url(#hg)" />
-          <path d="M22 18c-2.5 1-4.5 3.5-5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" />
+          <path
+            d="M27 46s-18-11-18-23a11 11 0 0 1 18-8.5A11 11 0 0 1 45 23c0 12-18 23-18 23z"
+            fill="url(#hg)"
+          />
+          <path
+            d="M22 18c-2.5 1-4.5 3.5-5 6"
+            stroke="rgba(255,255,255,0.4)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
         </svg>
       </div>
 
@@ -147,7 +186,8 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
             letterSpacing: "0.04em",
             lineHeight: 1.1,
             margin: 0,
-            textShadow: "0 0 40px rgba(244,228,193,0.7), 0 0 80px rgba(232,130,154,0.35), 0 3px 6px rgba(0,0,0,0.9)",
+            textShadow:
+              "0 0 40px rgba(244,228,193,0.7), 0 0 80px rgba(232,130,154,0.35), 0 3px 6px rgba(0,0,0,0.9)",
           }}
         >
           {COPY.gate.title}
@@ -167,9 +207,25 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
           margin: "0.8rem 0",
         }}
       >
-        <div style={{ flex: 1, height: "1px", background: "linear-gradient(to right, transparent, rgba(232,130,154,0.5))" }} />
-        <span style={{ color: "#e8829a", fontSize: "1.2rem", opacity: 0.9 }}>♡</span>
-        <div style={{ flex: 1, height: "1px", background: "linear-gradient(to left, transparent, rgba(232,130,154,0.5))" }} />
+        <div
+          style={{
+            flex: 1,
+            height: "1px",
+            background:
+              "linear-gradient(to right, transparent, rgba(232,130,154,0.5))",
+          }}
+        />
+        <span style={{ color: "#e8829a", fontSize: "1.2rem", opacity: 0.9 }}>
+          ♡
+        </span>
+        <div
+          style={{
+            flex: 1,
+            height: "1px",
+            background:
+              "linear-gradient(to left, transparent, rgba(232,130,154,0.5))",
+          }}
+        />
       </div>
 
       {/* Subtitle */}
@@ -201,8 +257,11 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
       <div
         style={{
           opacity: mounted ? 1 : 0,
-          transform: mounted ? "scale(1) translateY(0)" : "scale(0.8) translateY(20px)",
-          transition: "opacity 1.4s ease-out, transform 1.4s cubic-bezier(0.34,1.56,0.64,1)",
+          transform: mounted
+            ? "scale(1) translateY(0)"
+            : "scale(0.8) translateY(20px)",
+          transition:
+            "opacity 1.4s ease-out, transform 1.4s cubic-bezier(0.34,1.56,0.64,1)",
           transitionDelay: "1.5s",
         }}
       >
@@ -224,7 +283,9 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
             background: hovered
               ? "linear-gradient(135deg, #f9d4c8 0%, #e8829a 50%, #c2506e 100%)"
               : "linear-gradient(135deg, rgba(232,130,154,0.22) 0%, rgba(194,80,110,0.15) 100%)",
-            border: hovered ? "1px solid rgba(255,255,255,0.4)" : "1px solid rgba(232,130,154,0.5)",
+            border: hovered
+              ? "1px solid rgba(255,255,255,0.4)"
+              : "1px solid rgba(232,130,154,0.5)",
             borderRadius: "9999px",
             cursor: "pointer",
             backdropFilter: "blur(8px)",
@@ -242,8 +303,24 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
       </div>
 
       {/* Sound hint */}
-      <div style={{ marginTop: "1.8rem", opacity: mounted ? 0.45 : 0, transition: "opacity 1.4s ease-out", transitionDelay: "2s" }}>
-        <p style={{ fontFamily: "Inter, sans-serif", fontSize: "0.7rem", color: "#8a7060", letterSpacing: "0.18em", textTransform: "uppercase", margin: 0 }}>
+      <div
+        style={{
+          marginTop: "1.8rem",
+          opacity: mounted ? 0.45 : 0,
+          transition: "opacity 1.4s ease-out",
+          transitionDelay: "2s",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "Inter, sans-serif",
+            fontSize: "0.7rem",
+            color: "#8a7060",
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            margin: 0,
+          }}
+        >
           🎵 Best with sound on
         </p>
       </div>
@@ -264,7 +341,10 @@ function MemoriesOverlay() {
     // Fade in the first photo
     const t0 = setTimeout(() => setVisible(true), 300);
     const t1 = setTimeout(() => setCaptionVisible(true), 1200);
-    return () => { clearTimeout(t0); clearTimeout(t1); };
+    return () => {
+      clearTimeout(t0);
+      clearTimeout(t1);
+    };
   }, []);
 
   useEffect(() => {
@@ -319,11 +399,13 @@ function MemoriesOverlay() {
               width: i === current ? "24px" : "8px",
               height: "8px",
               borderRadius: "9999px",
-              background: i === current
-                ? "linear-gradient(90deg, #f9d4c8, #e8829a)"
-                : "rgba(232,130,154,0.3)",
+              background:
+                i === current
+                  ? "linear-gradient(90deg, #f9d4c8, #e8829a)"
+                  : "rgba(232,130,154,0.3)",
               transition: "all 0.5s cubic-bezier(0.34,1.56,0.64,1)",
-              boxShadow: i === current ? "0 0 10px rgba(232,130,154,0.6)" : "none",
+              boxShadow:
+                i === current ? "0 0 10px rgba(232,130,154,0.6)" : "none",
             }}
           />
         ))}
@@ -337,8 +419,8 @@ function MemoriesOverlay() {
           transform: leaving
             ? `rotate(${tilt + 8}deg) translateY(-30px) scale(0.88)`
             : visible
-            ? `rotate(${tilt}deg) translateY(0px) scale(1)`
-            : `rotate(${tilt - 6}deg) translateY(40px) scale(0.92)`,
+              ? `rotate(${tilt}deg) translateY(0px) scale(1)`
+              : `rotate(${tilt - 6}deg) translateY(40px) scale(0.92)`,
           transition: leaving
             ? "all 0.65s cubic-bezier(0.4,0,0.2,1)"
             : "all 0.8s cubic-bezier(0.34,1.56,0.64,1)",
@@ -367,12 +449,16 @@ function MemoriesOverlay() {
             key={photo.src}
             src={photo.src}
             alt={photo.caption}
+            draggable={false}
             style={{
               width: "100%",
               height: "100%",
               objectFit: "cover",
               display: "block",
               borderRadius: "2px",
+              pointerEvents: "none",
+              userSelect: "none",
+              WebkitUserDrag: "none",
             }}
           />
           {/* Subtle inner vignette */}
@@ -380,10 +466,41 @@ function MemoriesOverlay() {
             style={{
               position: "absolute",
               inset: 0,
-              background: "radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.25) 100%)",
+              background:
+                "radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.25) 100%)",
               pointerEvents: "none",
             }}
           />
+          {/* Privacy Watermark Overlay */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              padding: "16px",
+              boxSizing: "border-box",
+              pointerEvents: "none",
+              userSelect: "none",
+              opacity: 0.18,
+              fontFamily: "Georgia, serif",
+              color: "#ffffff",
+              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", transform: "rotate(-8deg)" }}>
+              <span>For Karu ♡</span>
+              <span>Only For Karu ♡</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "center", fontSize: "11px", transform: "rotate(-8deg)", fontWeight: "bold" }}>
+              <span>Private Memory 🔒</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", transform: "rotate(-8deg)" }}>
+              <span>Only For Karu ♡</span>
+              <span>For Karu ♡</span>
+            </div>
+          </div>
         </div>
 
         {/* Caption inside polaroid white strip */}
@@ -402,7 +519,8 @@ function MemoriesOverlay() {
         >
           <p
             style={{
-              fontFamily: "'Dancing Script', 'Caveat', 'Segoe Script', Georgia, serif",
+              fontFamily:
+                "'Dancing Script', 'Caveat', 'Segoe Script', Georgia, serif",
               fontSize: "clamp(0.85rem, 2.5vw, 1.05rem)",
               color: "#3a2020",
               textAlign: "center",
@@ -448,7 +566,7 @@ function IntroText() {
 
   useEffect(() => {
     const timers = COPY.intro.lines.map((_, i) =>
-      setTimeout(() => setVisibleLines(i + 1), 1500 + i * 4500)
+      setTimeout(() => setVisibleLines(i + 1), 1500 + i * 4500),
     );
     return () => timers.forEach(clearTimeout);
   }, []);
@@ -495,7 +613,7 @@ function TurnText() {
 
   useEffect(() => {
     const timers = COPY.turn.lines.map((_, i) =>
-      setTimeout(() => setVisibleLines(i + 1), 800 + i * 5000)
+      setTimeout(() => setVisibleLines(i + 1), 800 + i * 5000),
     );
     return () => timers.forEach(clearTimeout);
   }, []);
@@ -517,8 +635,14 @@ function TurnText() {
         <p
           key={i}
           style={{
-            fontFamily: i === 1 ? "'Great Vibes', Cormorant Garamond, Georgia, serif" : "Cormorant Garamond, Georgia, serif",
-            fontSize: i === 1 ? "clamp(2.5rem, 8vw, 5rem)" : "clamp(1rem, 2.5vw, 1.4rem)",
+            fontFamily:
+              i === 1
+                ? "'Great Vibes', Cormorant Garamond, Georgia, serif"
+                : "Cormorant Garamond, Georgia, serif",
+            fontSize:
+              i === 1
+                ? "clamp(2.5rem, 8vw, 5rem)"
+                : "clamp(1rem, 2.5vw, 1.4rem)",
             color: i === 1 ? "#fff4e0" : "#a89a85",
             fontStyle: i === 1 ? "normal" : "italic",
             textShadow: "0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)",
@@ -563,7 +687,8 @@ function RingIdlePrompt({ onTap }: { onTap: () => void }) {
           color: "#fff4e0",
           letterSpacing: "0.04em",
           margin: 0,
-          textShadow: "0 0 30px rgba(232,130,154,0.6), 0 0 60px rgba(0,0,0,0.9)",
+          textShadow:
+            "0 0 30px rgba(232,130,154,0.6), 0 0 60px rgba(0,0,0,0.9)",
           lineHeight: 1.2,
         }}
       >
@@ -611,7 +736,8 @@ function RingIdlePrompt({ onTap }: { onTap: () => void }) {
             width: "100%",
             height: "100%",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(232,130,154,0.3) 0%, transparent 70%)",
+            background:
+              "radial-gradient(circle, rgba(232,130,154,0.3) 0%, transparent 70%)",
             filter: "blur(5px)",
             animation: "heartBeat 1.8s ease-in-out infinite",
             opacity: hovered ? 1 : 0.7,
@@ -638,8 +764,16 @@ function RingIdlePrompt({ onTap }: { onTap: () => void }) {
               <stop offset="100%" stopColor="#c2506e" />
             </linearGradient>
           </defs>
-          <path d="M27 46s-18-11-18-23a11 11 0 0 1 18-8.5A11 11 0 0 1 45 23c0 12-18 23-18 23z" fill="url(#heartGrad)" />
-          <path d="M22 18c-2.5 1-4.5 3.5-5 6" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" />
+          <path
+            d="M27 46s-18-11-18-23a11 11 0 0 1 18-8.5A11 11 0 0 1 45 23c0 12-18 23-18 23z"
+            fill="url(#heartGrad)"
+          />
+          <path
+            d="M22 18c-2.5 1-4.5 3.5-5 6"
+            stroke="rgba(255,255,255,0.4)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
         </svg>
       </button>
     </div>
@@ -705,7 +839,8 @@ function ProposalUI({ onYes }: { onYes: () => void }) {
           fontFamily: "'Great Vibes', Cormorant Garamond, Georgia, serif",
           fontSize: "clamp(2rem, 6vw, 3.5rem)",
           color: "#fff4e0",
-          textShadow: "0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(232,130,154,0.35)",
+          textShadow:
+            "0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(232,130,154,0.35)",
           letterSpacing: "0.03em",
           lineHeight: 1.3,
           margin: 0,
@@ -715,25 +850,41 @@ function ProposalUI({ onYes }: { onYes: () => void }) {
         {COPY.ring.proposal}
       </h2>
 
-      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", gap: "1.5rem" }}>
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "1.5rem",
+        }}
+      >
         <button
           ref={yesPulseRef}
           onClick={onYes}
           style={{
-            background: "linear-gradient(135deg, #f9d4c8 0%, #e8829a 50%, #c2506e 100%)",
+            background:
+              "linear-gradient(135deg, #f9d4c8 0%, #e8829a 50%, #c2506e 100%)",
             color: "#2a0a14",
             fontFamily: "Cormorant Garamond, Georgia, serif",
             fontStyle: "italic",
             fontSize: "1.5rem",
             padding: "1rem 3.5rem",
             borderRadius: "9999px",
-            boxShadow: "0 0 40px rgba(232,130,154,0.6), 0 0 80px rgba(232,130,154,0.25)",
+            boxShadow:
+              "0 0 40px rgba(232,130,154,0.6), 0 0 80px rgba(232,130,154,0.25)",
             border: "1px solid rgba(255,255,255,0.25)",
             cursor: "pointer",
             transition: "box-shadow 0.3s ease",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 0 60px rgba(232,130,154,0.9), 0 0 120px rgba(232,130,154,0.45)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 0 40px rgba(232,130,154,0.6), 0 0 80px rgba(232,130,154,0.25)"; }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow =
+              "0 0 60px rgba(232,130,154,0.9), 0 0 120px rgba(232,130,154,0.45)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow =
+              "0 0 40px rgba(232,130,154,0.6), 0 0 80px rgba(232,130,154,0.25)";
+          }}
         >
           {COPY.ring.yesLabel}
         </button>
@@ -754,7 +905,8 @@ function ProposalUI({ onYes }: { onYes: () => void }) {
               padding: "0.4rem 1rem",
               borderRadius: "9999px",
               cursor: "default",
-              transition: "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease",
+              transition:
+                "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease",
               pointerEvents: thinkClicks >= 2 ? "none" : "auto",
             }}
           >
@@ -797,7 +949,15 @@ function AnsweredScreen() {
       }}
     >
       {/* Floating hearts */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: -1 }}>
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          pointerEvents: "none",
+          overflow: "hidden",
+          zIndex: -1,
+        }}
+      >
         {[...Array(20)].map((_, i) => (
           <span
             key={i}
@@ -806,7 +966,8 @@ function AnsweredScreen() {
               left: `${5 + i * 4.7}%`,
               top: "-10%",
               fontSize: `${0.8 + (i % 4) * 0.4}rem`,
-              color: i % 3 === 0 ? "#e8829a" : i % 3 === 1 ? "#f9d4c8" : "#c2506e",
+              color:
+                i % 3 === 0 ? "#e8829a" : i % 3 === 1 ? "#f9d4c8" : "#c2506e",
               animation: `rainHeart ${3 + (i % 5) * 0.8}s ease-in infinite`,
               animationDelay: `${(i * 0.35) % 4}s`,
               opacity: 0.7,
@@ -827,56 +988,122 @@ function AnsweredScreen() {
           marginBottom: "1.5rem",
         }}
       >
-        <div style={{ fontSize: "4rem", animation: "heartBeat 1.2s ease-in-out infinite", filter: "drop-shadow(0 0 30px rgba(232,130,154,0.9))", lineHeight: 1 }}>
+        <div
+          style={{
+            fontSize: "4rem",
+            animation: "heartBeat 1.2s ease-in-out infinite",
+            filter: "drop-shadow(0 0 30px rgba(232,130,154,0.9))",
+            lineHeight: 1,
+          }}
+        >
           ♥
         </div>
       </div>
 
       {/* She said Yes! */}
-      <div style={{ opacity: step >= 1 ? 1 : 0, transform: step >= 1 ? "translateY(0)" : "translateY(30px)", transition: "all 1s ease-out", marginBottom: "1rem" }}>
+      <div
+        style={{
+          opacity: step >= 1 ? 1 : 0,
+          transform: step >= 1 ? "translateY(0)" : "translateY(30px)",
+          transition: "all 1s ease-out",
+          marginBottom: "1rem",
+        }}
+      >
         <h2
           style={{
             fontFamily: "'Great Vibes', Cormorant Garamond, Georgia, serif",
             fontSize: "clamp(2.4rem, 8vw, 4.5rem)",
             color: "#fff4e0",
-            textShadow: "0 0 30px rgba(232,130,154,0.8), 0 0 60px rgba(232,130,154,0.4)",
+            textShadow:
+              "0 0 30px rgba(232,130,154,0.8), 0 0 60px rgba(232,130,154,0.4)",
             lineHeight: 1.1,
             margin: 0,
           }}
         >
-          She said Yes!
+          Aapne yes kaha yahooo
         </h2>
       </div>
 
       {/* Divider */}
-      <div style={{ opacity: step >= 2 ? 1 : 0, transition: "opacity 1s ease-out", display: "flex", alignItems: "center", gap: "10px", width: "260px", margin: "0.8rem 0" }}>
-        <div style={{ flex: 1, height: "1px", background: "linear-gradient(to right, transparent, rgba(232,130,154,0.6))" }} />
+      <div
+        style={{
+          opacity: step >= 2 ? 1 : 0,
+          transition: "opacity 1s ease-out",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          width: "260px",
+          margin: "0.8rem 0",
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            height: "1px",
+            background:
+              "linear-gradient(to right, transparent, rgba(232,130,154,0.6))",
+          }}
+        />
         <span style={{ color: "#e8829a", fontSize: "0.8rem" }}>♡</span>
-        <div style={{ flex: 1, height: "1px", background: "linear-gradient(to left, transparent, rgba(232,130,154,0.6))" }} />
+        <div
+          style={{
+            flex: 1,
+            height: "1px",
+            background:
+              "linear-gradient(to left, transparent, rgba(232,130,154,0.6))",
+          }}
+        />
       </div>
 
       {/* Final line */}
-      <div style={{ opacity: step >= 2 ? 1 : 0, transform: step >= 2 ? "translateY(0)" : "translateY(20px)", transition: "all 1.2s ease-out", marginBottom: "1.2rem" }}>
-        <p style={{ fontFamily: "Cormorant Garamond, Georgia, serif", fontSize: "clamp(1.1rem, 3vw, 1.5rem)", color: "#f4e4c1", fontStyle: "italic", letterSpacing: "0.04em", margin: 0, lineHeight: 1.6 }}>
+      <div
+        style={{
+          opacity: step >= 2 ? 1 : 0,
+          transform: step >= 2 ? "translateY(0)" : "translateY(20px)",
+          transition: "all 1.2s ease-out",
+          marginBottom: "1.2rem",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "Cormorant Garamond, Georgia, serif",
+            fontSize: "clamp(1.1rem, 3vw, 1.5rem)",
+            color: "#f4e4c1",
+            fontStyle: "italic",
+            letterSpacing: "0.04em",
+            margin: 0,
+            lineHeight: 1.6,
+          }}
+        >
           {COPY.ring.finalLine}
         </p>
       </div>
 
       {/* Love message cards */}
       {[
-        { emoji: "🌹", text: "Every day with you is a gift I never want to stop unwrapping." },
+        {
+          emoji: "🌹",
+          text: "Every day with you is a gift I never want to stop unwrapping.",
+        },
         { emoji: "✨", text: "You are my home, my adventure, my forever." },
-        { emoji: "💍", text: "Today, tomorrow, and every day after — it's always you." },
+        {
+          emoji: "💍",
+          text: "Today, tomorrow, and every day after — it's always you.",
+        },
       ].map((msg, i) => (
         <div
           key={i}
           style={{
             opacity: step >= i + 3 ? 1 : 0,
-            transform: step >= i + 3 ? "translateY(0) scale(1)" : "translateY(20px) scale(0.95)",
+            transform:
+              step >= i + 3
+                ? "translateY(0) scale(1)"
+                : "translateY(20px) scale(0.95)",
             transition: "all 1s ease-out",
             marginBottom: "0.7rem",
             padding: "0.75rem 1.4rem",
-            background: "linear-gradient(135deg, rgba(232,130,154,0.08) 0%, rgba(194,80,110,0.06) 100%)",
+            background:
+              "linear-gradient(135deg, rgba(232,130,154,0.08) 0%, rgba(194,80,110,0.06) 100%)",
             border: "1px solid rgba(232,130,154,0.2)",
             borderRadius: "12px",
             backdropFilter: "blur(4px)",
@@ -884,7 +1111,16 @@ function AnsweredScreen() {
             width: "100%",
           }}
         >
-          <p style={{ fontFamily: "Cormorant Garamond, Georgia, serif", fontSize: "clamp(0.9rem, 2.5vw, 1.05rem)", color: "#d4a8b8", fontStyle: "italic", margin: 0, lineHeight: 1.5 }}>
+          <p
+            style={{
+              fontFamily: "Cormorant Garamond, Georgia, serif",
+              fontSize: "clamp(0.9rem, 2.5vw, 1.05rem)",
+              color: "#d4a8b8",
+              fontStyle: "italic",
+              margin: 0,
+              lineHeight: 1.5,
+            }}
+          >
             <span style={{ marginRight: "0.5rem" }}>{msg.emoji}</span>
             {msg.text}
           </p>
@@ -948,7 +1184,16 @@ function MuteToggle() {
         e.currentTarget.style.boxShadow = "0 0 14px rgba(232,130,154,0.1)";
       }}
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e8829a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#e8829a"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         {audioEnabled ? (
           <>
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />

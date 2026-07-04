@@ -77,16 +77,49 @@ export function useAudioController() {
   }, [audioEnabled]);
 
   const playChime = useCallback(() => {
-    const chime = _chimeHowl;
     const bg = _bgHowl;
-    if (chime && useProposal.getState().audioEnabled) {
-      chime.play();
-    }
-    // Briefly duck the background track so the chime cuts through
-    if (bg && useProposal.getState().audioEnabled) {
+    const audioEnabled = useProposal.getState().audioEnabled;
+    if (!audioEnabled) return;
+
+    // Fade background completely out before chime starts
+    if (bg) {
       const originalVol = bg.volume();
-      bg.fade(originalVol, 0.15, 200);
-      setTimeout(() => bg.fade(0.15, originalVol, 1200), 1100);
+      bg.fade(originalVol, 0, 600); // smooth 0.6s fade out
+
+      // Create a fresh chime each time (prevents overlap issues)
+      const chime = new Howl({
+        src: [AUDIO.chime],
+        volume: 0,
+        html5: true,
+        onloaderror: () => {
+          // Chime missing — just restore background
+          if (bg) bg.fade(0, originalVol, 800);
+        },
+        onend: () => {
+          // Chime finished — fade background back in smoothly
+          if (bg && useProposal.getState().audioEnabled) {
+            bg.fade(bg.volume(), originalVol, 1800);
+          }
+        },
+      });
+
+      // Start chime after background has faded
+      setTimeout(() => {
+        if (!useProposal.getState().audioEnabled) {
+          // User muted during fade — just restore bg silently
+          return;
+        }
+        chime.volume(0);
+        chime.play();
+        chime.fade(0, 0.75, 300); // fade chime in
+      }, 500);
+
+    } else {
+      // No background — play chime directly
+      if (_chimeHowl) {
+        _chimeHowl.stop();
+        _chimeHowl.play();
+      }
     }
   }, []);
 

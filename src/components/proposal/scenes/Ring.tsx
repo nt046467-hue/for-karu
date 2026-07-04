@@ -1,111 +1,114 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useProposal } from "../state";
 import { detectCapabilities } from "@/lib/proposal/capabilities";
 
 /**
- * The Ring — centerpiece of the proposal.
+ * The Ring — realistic solitaire engagement ring.
  *
- * Geometry: procedural (PRD §4.1 Option A)
- *   - Band: TorusGeometry (high segment count for smoothness)
- *   - Diamond: custom brilliant-cut shape (top crown + bottom pavilion)
- *   - Prongs: 4 small cylinders gripping the gem
- *
- * Material: PRD §4.2 spec exactly
- *   - Gold band: MeshPhysicalMaterial, metalness 1.0, roughness 0.2, envMapIntensity 2
- *   - Diamond: MeshPhysicalMaterial, transmission 1.0, ior 2.4 (real diamond IOR),
- *     thickness 0.5, roughness 0 — this is what makes light bend through it.
- *
- * On mobile, transmission is disabled (perf fallback → fake glass look).
+ * Rose-gold band with cathedral prong setting.
+ * Diamond with multi-layer shimmer for realistic sparkle.
+ * Scales automatically for mobile vs desktop.
  */
 
-const GOLD_COLOR = "#FFD700"; // match to real ring: rose gold #E8B4A0 / white gold #E8E8E8
+// Rose gold — warm romantic hue
+const ROSE_GOLD = "#E8B4A0";
+const ROSE_GOLD_DARK = "#C8845A";
 
 interface RingProps {
-  /** Set true once the ring has fully risen out of the box. Drives idle spin. */
   revealed?: boolean;
 }
 
 export function Ring({ revealed = false }: RingProps) {
   const groupRef = useRef<THREE.Group>(null);
   const diamondRef = useRef<THREE.Mesh>(null);
+  const haloRef = useRef<THREE.Mesh>(null);
   const caps = useMemo(() => detectCapabilities(), []);
+  const { size } = useThree();
 
-  // --- Geometry (memoized once) ---
+  // Scale down on narrow screens (mobile portrait)
+  const mobileScale = useMemo(() => {
+    const aspect = size.width / size.height;
+    if (aspect < 0.6) return 0.72; // very narrow portrait
+    if (aspect < 0.8) return 0.82; // normal portrait
+    return 1.0;
+  }, [size.width, size.height]);
 
+  // --- Band geometry: smooth torus ---
   const bandGeometry = useMemo(() => {
-    // radius 1, tube 0.16, 64 radial segments, 128 tubular segments
-    return new THREE.TorusGeometry(1, 0.16, 64, 128);
+    return new THREE.TorusGeometry(0.9, 0.14, 80, 160);
   }, []);
 
-  const diamondGeometry = useMemo(() => {
-    // Brilliant-cut diamond: top crown (table + crown facets) + bottom pavilion
-    // Built by merging two cone geometries top-to-bottom, then flattening the top.
-    //
-    // We construct it from a single BufferGeometry by computing vertices manually.
-    // Crown: 8-sided cone, narrower at top (the "table")
-    // Pavilion: 8-sided cone, narrowing to a point at the bottom (the "culet")
-    const segments = 8;
+  // --- Cathedral shoulders: slightly raised band sections near the setting ---
+  const shoulderGeometry = useMemo(() => {
+    // Two small torus arcs that arch upward toward the prongs
+    return new THREE.TorusGeometry(0.9, 0.11, 32, 80, Math.PI * 0.55);
+  }, []);
 
-    const crownHeight = 0.45;
-    const pavilionHeight = 0.9;
-    const tableRadius = 0.42; // top flat
-    const girdleRadius = 0.62; // widest point (where crown meets pavilion)
+  // --- Diamond geometry: proper brilliant cut (more facets = more sparkle) ---
+  const diamondGeometry = useMemo(() => {
+    const segments = 16; // 16 sides = much smoother, more facets
+    const crownHeight = 0.38;
+    const pavilionHeight = 0.72;
+    const tableRadius = 0.36;
+    const girdleRadius = 0.54;
+    const starRadius = 0.46; // mid-crown breakline
 
     const positions: number[] = [];
     const normals: number[] = [];
     const uvs: number[] = [];
 
-    // Helper: push a triangle (a, b, c)
     const pushTri = (
       ax: number, ay: number, az: number,
       bx: number, by: number, bz: number,
       cx: number, cy: number, cz: number,
     ) => {
       positions.push(ax, ay, az, bx, by, bz, cx, cy, cz);
-      const nx = (ay - by) * (cz - bz) - (az - bz) * (cy - by);
-      const ny = (az - bz) * (bx - ax) - (ax - bx) * (cz - bz);
-      const nz = (ax - bx) * (by - ay) - (ay - by) * (bx - ax);
+      const nx = (by - ay) * (cz - az) - (bz - az) * (cy - ay);
+      const ny = (bz - az) * (cx - ax) - (bx - ax) * (cz - az);
+      const nz = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
       const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
-      normals.push(
-        -nx / len, -ny / len, -nz / len,
-        -nx / len, -ny / len, -nz / len,
-        -nx / len, -ny / len, -nz / len,
-      );
+      normals.push(nx / len, ny / len, nz / len, nx / len, ny / len, nz / len, nx / len, ny / len, nz / len);
       uvs.push(0, 0, 1, 0, 0.5, 1);
     };
 
-    // Generate ring vertices for crown (at girdleRadius) and table (at tableRadius)
     for (let i = 0; i < segments; i++) {
       const a1 = (i / segments) * Math.PI * 2;
       const a2 = ((i + 1) / segments) * Math.PI * 2;
+      const aMid = ((i + 0.5) / segments) * Math.PI * 2;
 
-      // Crown: girdle (y=0) to table (y=crownHeight)
       const g1x = Math.cos(a1) * girdleRadius, g1z = Math.sin(a1) * girdleRadius;
       const g2x = Math.cos(a2) * girdleRadius, g2z = Math.sin(a2) * girdleRadius;
-      const t1x = Math.cos(a1) * tableRadius, t1z = Math.sin(a1) * tableRadius;
-      const t2x = Math.cos(a2) * tableRadius, t2z = Math.sin(a2) * tableRadius;
+      const t1x = Math.cos(a1) * tableRadius,  t1z = Math.sin(a1) * tableRadius;
+      const t2x = Math.cos(a2) * tableRadius,  t2z = Math.sin(a2) * tableRadius;
+      const s1x = Math.cos(aMid) * starRadius, s1z = Math.sin(aMid) * starRadius;
 
-      // Crown side triangle (girdle-to-table per segment)
-      pushTri(g1x, 0, g1z, g2x, 0, g2z, t2x, crownHeight, t2z);
-      pushTri(g1x, 0, g1z, t2x, crownHeight, t2z, t1x, crownHeight, t1z);
+      // Upper crown: girdle → star facet point → table corner
+      pushTri(g1x, 0, g1z, g2x, 0, g2z, s1x, crownHeight * 0.55, s1z);
+      pushTri(g1x, 0, g1z, s1x, crownHeight * 0.55, s1z, t1x, crownHeight, t1z);
+      pushTri(g2x, 0, g2z, t2x, crownHeight, t2z, s1x, crownHeight * 0.55, s1z);
 
-      // Pavilion: girdle (y=0) down to culet point (y=-pavilionHeight)
-      const culetX = 0, culetY = -pavilionHeight, culetZ = 0;
-      pushTri(g2x, 0, g2z, g1x, 0, g1z, culetX, culetY, culetZ);
+      // Pavilion: girdle → culet
+      const culetY = -pavilionHeight;
+      // Break pavilion into 2 sub-facets for more realism
+      const pMidX = Math.cos(aMid) * girdleRadius * 0.3;
+      const pMidZ = Math.sin(aMid) * girdleRadius * 0.3;
+      const pMidY = -pavilionHeight * 0.5;
+      pushTri(g1x, 0, g1z, pMidX, pMidY, pMidZ, g2x, 0, g2z);
+      pushTri(g1x, 0, g1z, 0, culetY, 0, pMidX, pMidY, pMidZ);
+      pushTri(g2x, 0, g2z, pMidX, pMidY, pMidZ, 0, culetY, 0);
     }
 
-    // Table (top flat face) — fan from center
-    const tableCenterY = crownHeight;
+    // Table (flat top) — fan from center
     for (let i = 0; i < segments; i++) {
       const a1 = (i / segments) * Math.PI * 2;
       const a2 = ((i + 1) / segments) * Math.PI * 2;
       const t1x = Math.cos(a1) * tableRadius, t1z = Math.sin(a1) * tableRadius;
       const t2x = Math.cos(a2) * tableRadius, t2z = Math.sin(a2) * tableRadius;
-      pushTri(t1x, tableCenterY, t1z, t2x, tableCenterY, t2z, 0, tableCenterY, 0);
+      pushTri(t1x, crownHeight, t1z, t2x, crownHeight, t2z, 0, crownHeight, 0);
     }
 
     const geo = new THREE.BufferGeometry();
@@ -116,102 +119,163 @@ export function Ring({ revealed = false }: RingProps) {
     return geo;
   }, []);
 
-  // --- Materials ---
-
+  // --- Rose gold band material ---
   const goldMaterial = useMemo(() => {
     return new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(GOLD_COLOR),
-      metalness: 0.8,
-      roughness: 0.3,
-      envMapIntensity: 1.0,
-      clearcoat: 0.3,
-      clearcoatRoughness: 0.1,
+      color: new THREE.Color(ROSE_GOLD),
+      metalness: 1.0,
+      roughness: 0.18,
+      envMapIntensity: 1.8,
+      clearcoat: 0.5,
+      clearcoatRoughness: 0.08,
+      reflectivity: 1.0,
+      emissive: new THREE.Color(ROSE_GOLD_DARK),
+      emissiveIntensity: 0.04,
     });
   }, []);
 
+  // --- Diamond material: iridescent sparkle ---
   const diamondMaterial = useMemo(() => {
     if (caps.useTransmission) {
-      // Full PBR spec from PRD §4.2 — optimized to work with/without envMap
       return new THREE.MeshPhysicalMaterial({
         color: new THREE.Color("#ffffff"),
-        emissive: new THREE.Color("#111111"), // subtle self-glow to stand out
-        metalness: 0.1,
-        roughness: 0.1,
-        transmission: 0.6, // reduced from 1.0 so it is visible even without envMap
-        thickness: 0.5,
-        ior: 2.4, // diamond's real index of refraction
+        metalness: 0.0,
+        roughness: 0.0,
+        transmission: 0.92,
+        thickness: 0.8,
+        ior: 2.42,           // real diamond IOR
+        dispersion: 0.3,
         clearcoat: 1.0,
-        clearcoatRoughness: 0.1,
-        envMapIntensity: 1.5,
+        clearcoatRoughness: 0.0,
+        envMapIntensity: 3.0,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.95,
+        emissive: new THREE.Color("#ffffff"),
+        emissiveIntensity: 0.06,
       });
     }
-    // Mobile fallback — fake glass with iridescent white
+    // Mobile: bright iridescent white — visible without transmission
     return new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color("#f8fbff"),
-      metalness: 0.1,
-      roughness: 0.05,
-      envMapIntensity: 2.5,
-      clearcoat: 1,
-      clearcoatRoughness: 0,
+      color: new THREE.Color("#e8f4ff"),
+      metalness: 0.0,
+      roughness: 0.0,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.0,
+      envMapIntensity: 3.0,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.92,
+      emissive: new THREE.Color("#ffffff"),
+      emissiveIntensity: 0.15,
     });
   }, [caps.useTransmission]);
 
-  // Prong positions (4 prongs evenly around the diamond's girdle)
-  const prongs = useMemo(() => {
-    const count = 4;
-    const radius = 0.55;
-    return Array.from({ length: count }, (_, i) => {
-      const a = (i / count) * Math.PI * 2 + Math.PI / 4;
-      return {
-        x: Math.cos(a) * radius,
-        z: Math.sin(a) * radius,
-        key: i,
-      };
+  // --- Shimmer halo material (inner glow around diamond) ---
+  const haloMaterial = useMemo(() => {
+    return new THREE.MeshBasicMaterial({
+      color: new THREE.Color("#ffe4ef"),
+      transparent: true,
+      opacity: 0.18,
+      side: THREE.BackSide,
+      depthWrite: false,
     });
   }, []);
 
-  // --- Idle rotation ---
-  // Slow idle when revealed (PRD §4.6 step 5: 0.15 rad/s permanent spin)
-  useFrame((_, dt) => {
+  // --- Cathedral prongs (6-prong solitaire) ---
+  const prongs = useMemo(() => {
+    const count = 6;
+    const radius = 0.50;
+    return Array.from({ length: count }, (_, i) => {
+      const a = (i / count) * Math.PI * 2;
+      return { x: Math.cos(a) * radius, z: Math.sin(a) * radius, key: i };
+    });
+  }, []);
+
+  // Prong material: same rose gold
+  const prongMaterial = useMemo(() => goldMaterial.clone(), [goldMaterial]);
+
+  // --- Animation ---
+  useFrame((state, dt) => {
     if (!groupRef.current) return;
+    const t = state.clock.elapsedTime;
+
     if (revealed) {
-      groupRef.current.rotation.y += dt * 0.5; // a bit faster than 0.15 so the user can see all facets
+      // Idle spin
+      groupRef.current.rotation.y += dt * 0.45;
+    }
+
+    // Diamond shimmer: subtle scale pulse + emissive flicker
+    if (diamondRef.current) {
+      const shimmer = 1 + Math.sin(t * 3.5) * 0.012;
+      diamondRef.current.scale.setScalar(shimmer);
+      const mat = diamondRef.current.material as THREE.MeshPhysicalMaterial;
+      mat.emissiveIntensity = caps.useTransmission
+        ? 0.04 + Math.abs(Math.sin(t * 4.2)) * 0.08
+        : 0.1 + Math.abs(Math.sin(t * 4.2)) * 0.12;
+    }
+
+    // Halo pulse
+    if (haloRef.current) {
+      const haloMat = haloRef.current.material as THREE.MeshBasicMaterial;
+      haloMat.opacity = 0.12 + Math.abs(Math.sin(t * 2.0)) * 0.12;
     }
   });
 
   return (
-    <group ref={groupRef} dispose={null}>
-      {/* Band — rotated so the torus lies flat (ring finger orientation) */}
+    <group ref={groupRef} dispose={null} scale={[mobileScale, mobileScale, mobileScale]}>
+      {/* Rose gold band — flat orientation */}
+      <mesh geometry={bandGeometry} material={goldMaterial} rotation={[Math.PI / 2, 0, 0]} />
+
+      {/* Cathedral shoulder arcs (left and right) */}
       <mesh
-        geometry={bandGeometry}
+        geometry={shoulderGeometry}
         material={goldMaterial}
-        rotation={[Math.PI / 2, 0, 0]}
+        rotation={[Math.PI / 2, 0, Math.PI * 0.5]}
+        position={[0, 0.05, 0]}
+        scale={[1.02, 1.02, 1.02]}
+      />
+      <mesh
+        geometry={shoulderGeometry}
+        material={goldMaterial}
+        rotation={[Math.PI / 2, 0, -Math.PI * 0.5]}
+        position={[0, 0.05, 0]}
+        scale={[1.02, 1.02, 1.02]}
       />
 
-      {/* Diamond — sitting on top of the band */}
+      {/* Setting base: small cylinder bridging band to prongs */}
+      <mesh position={[0, 0.22, 0]} material={goldMaterial}>
+        <cylinderGeometry args={[0.46, 0.56, 0.28, 32]} />
+      </mesh>
+
+      {/* Diamond */}
       <mesh
         ref={diamondRef}
         geometry={diamondGeometry}
         material={diamondMaterial}
-        position={[0, 0.55, 0]}
-        scale={[1, 1, 1]}
+        position={[0, 0.48, 0]}
       />
 
-      {/* Prongs */}
+      {/* Halo glow around diamond */}
+      <mesh ref={haloRef} position={[0, 0.48, 0]} material={haloMaterial}>
+        <sphereGeometry args={[0.72, 24, 24]} />
+      </mesh>
+
+      {/* 6-prong setting */}
       {prongs.map((p) => (
         <mesh
           key={p.key}
-          position={[p.x, 0.35, p.z]}
-          rotation={[0, 0, 0]}
+          position={[p.x, 0.30, p.z]}
+          material={prongMaterial}
         >
-          <cylinderGeometry args={[0.04, 0.05, 0.4, 12]} />
-          <primitive object={goldMaterial} attach="material" />
+          {/* Tapered prong: wider at base, thin tip gripping the diamond */}
+          <cylinderGeometry args={[0.025, 0.045, 0.45, 10]} />
         </mesh>
       ))}
+
+      {/* Tiny diamond accent: round brilliant reflection point at table center */}
+      <mesh position={[0, 0.88, 0]}>
+        <sphereGeometry args={[0.045, 12, 12]} />
+        <meshBasicMaterial color="#ffffff" />
+      </mesh>
     </group>
   );
 }

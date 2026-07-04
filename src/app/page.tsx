@@ -65,18 +65,36 @@ export default function Home() {
       // PrintScreen key
       if (e.key === "PrintScreen" || e.keyCode === 44) {
         setIsScreenBlocked(true);
+        clearClipboard();
         setTimeout(() => setIsScreenBlocked(false), 2500);
       }
       // Windows Key / Command Key (Meta) -> held down during screenshots
       if (e.key === "Meta" || e.key === "OS" || e.keyCode === 91 || e.keyCode === 92) {
         setIsScreenBlocked(true);
+        clearClipboard();
         setTimeout(() => setIsScreenBlocked(false), 2000);
       }
     };
 
-    // 4. Blur / tab-change events -> instantly hide the screen
+    // 4. Overwrite clipboard to destroy printscreen image cache
+    const clearClipboard = () => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText("🔒 Private Memory — For Karu & Nabin Only ♡").catch(() => {});
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "PrintScreen" || e.keyCode === 44 || e.key === "Meta" || e.key === "OS") {
+        setIsScreenBlocked(true);
+        clearClipboard();
+        setTimeout(() => setIsScreenBlocked(false), 2000);
+      }
+    };
+
+    // 5. Blur / tab-change events -> instantly hide the screen and clear clipboard
     const handleBlur = () => {
       setIsScreenBlocked(true);
+      clearClipboard();
     };
 
     const handleFocus = () => {
@@ -89,23 +107,36 @@ export default function Home() {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setIsScreenBlocked(true);
+        clearClipboard();
+      }
+    };
+
+    // 6. Block copy clipboard commands
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      if (e.clipboardData) {
+        e.clipboardData.setData("text/plain", "🔒 Private Memory — For Karu & Nabin Only ♡");
       }
     };
 
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("dragstart", handleDragStart);
     document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
     window.addEventListener("blur", handleBlur);
     window.addEventListener("focus", handleFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("copy", handleCopy);
 
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("dragstart", handleDragStart);
       document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("copy", handleCopy);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
