@@ -8,26 +8,25 @@ import gsap from "gsap";
 import { useProposal } from "../state";
 import { detectCapabilities } from "@/lib/proposal/capabilities";
 import { Ring } from "./Ring";
-import { LoveHeart } from "./LoveHeart";
+import { RingBox } from "./RingBox";
+import { HeartBurst } from "./HeartBurst";
 import { useAudioController } from "../useAudio";
 
 /**
  * RingScene — the centerpiece (PRD §4).
  *
  * Stages:
- *   1. ring-idle: Box visible, slow idle rotation (0.1 rad/s), waiting for tap.
- *      Camera slowly dollies in toward the box.
- *   2. ring-open: User tapped. Lid hinges open (handled in RingBox),
- *      chime plays, ring rises out of box (Y +0.8 over 1s, power3.out),
- *      camera continues subtle dolly.
- *   3. ring-reveal: Ring does one full 360° rotation (2.5s, power1.inOut)
- *      so every facet catches light, then settles into permanent slow idle spin.
+ *   1. ring-idle: Velvet ring box visible, slow idle rotation, waiting for tap.
+ *   2. ring-open: User tapped. Box lid hinges open, chime plays,
+ *      small hearts BURST out of the box, ring rises up.
+ *   3. ring-reveal: Ring does one full 360° rotation, then settles.
  *   4. proposal: Proposal text + Yes button visible (handled by overlay UI).
  */
 export function RingScene() {
   const phase = useProposal((s) => s.phase);
   const setPhase = useProposal((s) => s.setPhase);
   const ringGroupRef = useRef<THREE.Group>(null);
+  const boxRef = useRef<THREE.Group>(null);
   const camera = useThree((s) => s.camera);
   const caps = useMemo(() => detectCapabilities(), []);
   const { playChime } = useAudioController();
@@ -38,12 +37,11 @@ export function RingScene() {
   const reveal360Active = useRef(false);
 
   // --- Phase: ring-idle → ring-open (triggered by user tap, handled in Overlay) ---
-  // When phase becomes 'ring-open', start the ring rise + chime
   useEffect(() => {
     if (phase !== "ring-open") return;
     playChime();
 
-    // Ring rises out of the box (PRD §4.6 step 3)
+    // Ring rises out of the box
     if (ringGroupRef.current) {
       const startY = ringGroupRef.current.position.y;
       gsap.to(ringGroupRef.current.position, {
@@ -59,20 +57,18 @@ export function RingScene() {
     }
   }, [phase, setPhase, playChime]);
 
-  // --- Phase: ring-reveal → proposal (after the 360° rotation finishes) ---
+  // --- Phase: ring-reveal → proposal ---
   useEffect(() => {
     if (phase !== "ring-reveal") return;
-    // Total reveal duration: 2.5s for 360° + 0.5s pause before proposal text
     const t = setTimeout(() => {
       setPhase("proposal");
     }, 3000);
     return () => clearTimeout(t);
   }, [phase, setPhase]);
 
-  // --- Camera dolly (subtle push toward the ring throughout the reveal) ---
+  // --- Camera dolly ---
   useEffect(() => {
     if (phase !== "ring-idle" && phase !== "ring-open" && phase !== "ring-reveal") return;
-    // FOV 50 → 42 over the duration of the ring sequence (PRD §4.6 step 6)
     if ((camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
       const pc = camera as THREE.PerspectiveCamera;
       gsap.to(pc, {
@@ -84,16 +80,18 @@ export function RingScene() {
     }
   }, [phase, camera]);
 
-  // LoveHeart self-animates; only handle the one-shot 360° ring reveal
+  // --- Idle box rotation + one-shot ring reveal spin ---
   useFrame((_, dt) => {
-    // One-shot 360° rotation for the ring after it rises (PRD §4.6 step 4)
+    // Slowly rotate the box while idle
+    if (boxRef.current && phase === "ring-idle") {
+      boxRef.current.rotation.y += dt * 0.1;
+    }
+    // One-shot 360° rotation for the ring after it rises
     if (reveal360Active.current && ringGroupRef.current) {
       const duration = 2.5;
       reveal360Progress.current += dt / duration;
       const t = Math.min(reveal360Progress.current, 1);
-      // power1.inOut ease (quad)
       const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-      // Ring base rotation accumulates with idle spin once revealed
       ringGroupRef.current.rotation.y = eased * Math.PI * 2;
       if (t >= 1) {
         reveal360Active.current = false;
@@ -103,8 +101,7 @@ export function RingScene() {
 
   return (
     <group>
-      {/* Lighting — manual setup so we don't depend on network HDRI */}
-      {/* Key spotlight from top-front, warm white */}
+      {/* Lighting */}
       <spotLight
         position={[3, 6, 4]}
         angle={0.5}
@@ -113,34 +110,24 @@ export function RingScene() {
         color="#fff4e0"
         distance={20}
       />
-      {/* Soft rim light from behind, cool blue-white */}
-      <pointLight
-        position={[-4, 2, -4]}
-        intensity={1.2}
-        color="#c4d8ff"
-        distance={15}
-      />
-      {/* Front fill light so box faces are visible */}
-      <pointLight
-        position={[0, 1, 5]}
-        intensity={1.5}
-        color="#fff8f0"
-        distance={12}
-      />
-      {/* Ambient fill — enough to see everything */}
+      <pointLight position={[-4, 2, -4]} intensity={1.2} color="#c4d8ff" distance={15} />
+      <pointLight position={[0, 1, 5]} intensity={1.5} color="#fff8f0" distance={12} />
       <ambientLight intensity={0.5} color="#ffffff" />
 
-      {/* Love hearts cluster — replaces the ring box */}
-      <group position={[0, 0, 0]}>
-        <LoveHeart />
+      {/* The velvet ring box — idle rotation parent */}
+      <group ref={boxRef} position={[0, 0, 0]}>
+        <RingBox />
       </group>
 
-      {/* The ring — starts hidden inside the box (low Y), rises when phase = ring-open */}
+      {/* Small hearts that burst out when box opens */}
+      <HeartBurst />
+
+      {/* The ring — hidden inside box, rises on ring-open */}
       <group ref={ringGroupRef} position={[0, -0.2, 0]}>
         <Ring revealed={revealed} />
       </group>
 
-      {/* Sparkles around the gem (PRD §4.5) */}
+      {/* Sparkles around the gem */}
       <Sparkles
         count={caps.sparkleCount}
         scale={3}

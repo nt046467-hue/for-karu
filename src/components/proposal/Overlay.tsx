@@ -581,7 +581,7 @@ function RingIdlePrompt({ onTap }: { onTap: () => void }) {
           opacity: 0.85,
         }}
       >
-        Touch the hearts ♡
+        Tap to open the box ♡
       </p>
 
       <button
