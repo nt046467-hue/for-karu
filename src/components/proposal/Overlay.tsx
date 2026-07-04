@@ -937,15 +937,16 @@ function AnsweredScreen() {
   return (
     <div
       style={{
+        position: "fixed",
+        inset: 0,
         display: "flex",
         flexDirection: "column",
+        justifyContent: "space-between",
         alignItems: "center",
-        justifyContent: "center",
-        gap: "0",
-        padding: "2rem",
-        textAlign: "center",
-        width: "100%",
-        maxWidth: "600px",
+        padding: "max(1.5rem, 4vh) 1.5rem",
+        boxSizing: "border-box",
+        pointerEvents: "none",
+        zIndex: 15,
       }}
     >
       {/* Floating hearts */}
@@ -979,168 +980,228 @@ function AnsweredScreen() {
         ))}
       </div>
 
-      {/* Big beating heart */}
+      {/* TOP CARD: Beating heart & Yes confirmation */}
       <div
         style={{
-          opacity: step >= 1 ? 1 : 0,
-          transform: step >= 1 ? "scale(1)" : "scale(0)",
-          transition: "all 0.8s cubic-bezier(0.34,1.56,0.64,1)",
-          marginBottom: "1.5rem",
-        }}
-      >
-        <div
-          style={{
-            fontSize: "4rem",
-            animation: "heartBeat 1.2s ease-in-out infinite",
-            filter: "drop-shadow(0 0 30px rgba(232,130,154,0.9))",
-            lineHeight: 1,
-          }}
-        >
-          ♥
-        </div>
-      </div>
-
-      {/* She said Yes! */}
-      <div
-        style={{
-          opacity: step >= 1 ? 1 : 0,
-          transform: step >= 1 ? "translateY(0)" : "translateY(30px)",
-          transition: "all 1s ease-out",
-          marginBottom: "1rem",
-        }}
-      >
-        <h2
-          style={{
-            fontFamily: "'Great Vibes', Cormorant Garamond, Georgia, serif",
-            fontSize: "clamp(2.4rem, 8vw, 4.5rem)",
-            color: "#fff4e0",
-            textShadow:
-              "0 0 30px rgba(232,130,154,0.8), 0 0 60px rgba(232,130,154,0.4)",
-            lineHeight: 1.1,
-            margin: 0,
-          }}
-        >
-          Aapne yes kaha yahooo
-        </h2>
-      </div>
-
-      {/* Divider */}
-      <div
-        style={{
-          opacity: step >= 2 ? 1 : 0,
-          transition: "opacity 1s ease-out",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          gap: "10px",
-          width: "260px",
-          margin: "0.8rem 0",
+          width: "100%",
+          maxWidth: "460px",
+          padding: "1rem 1.5rem",
+          borderRadius: "20px",
+          background: "rgba(12, 6, 12, 0.65)",
+          border: "1px solid rgba(232, 130, 154, 0.15)",
+          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.8)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          textAlign: "center",
         }}
       >
+        {/* Big beating heart */}
         <div
           style={{
-            flex: 1,
-            height: "1px",
-            background:
-              "linear-gradient(to right, transparent, rgba(232,130,154,0.6))",
-          }}
-        />
-        <span style={{ color: "#e8829a", fontSize: "0.8rem" }}>♡</span>
-        <div
-          style={{
-            flex: 1,
-            height: "1px",
-            background:
-              "linear-gradient(to left, transparent, rgba(232,130,154,0.6))",
-          }}
-        />
-      </div>
-
-      {/* Final line */}
-      <div
-        style={{
-          opacity: step >= 2 ? 1 : 0,
-          transform: step >= 2 ? "translateY(0)" : "translateY(20px)",
-          transition: "all 1.2s ease-out",
-          marginBottom: "1.2rem",
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "Cormorant Garamond, Georgia, serif",
-            fontSize: "clamp(1.1rem, 3vw, 1.5rem)",
-            color: "#f4e4c1",
-            fontStyle: "italic",
-            letterSpacing: "0.04em",
-            margin: 0,
-            lineHeight: 1.6,
+            opacity: step >= 1 ? 1 : 0,
+            transform: step >= 1 ? "scale(1)" : "scale(0)",
+            transition: "all 0.8s cubic-bezier(0.34,1.56,0.64,1)",
+            marginBottom: "0.5rem",
           }}
         >
-          {COPY.ring.finalLine}
-        </p>
-      </div>
+          <div
+            style={{
+              fontSize: "3rem",
+              animation: "heartBeat 1.2s ease-in-out infinite",
+              filter: "drop-shadow(0 0 20px rgba(232,130,154,0.8))",
+              lineHeight: 1,
+            }}
+          >
+            ♥
+          </div>
+        </div>
 
-      {/* Love message cards */}
-      {[
-        {
-          emoji: "🌹",
-          text: "Every day with you is a gift I never want to stop unwrapping.",
-        },
-        { emoji: "✨", text: "You are my home, my adventure, my forever." },
-        {
-          emoji: "💍",
-          text: "Today, tomorrow, and every day after — it's always you.",
-        },
-      ].map((msg, i) => (
+        {/* She said Yes! */}
         <div
-          key={i}
           style={{
-            opacity: step >= i + 3 ? 1 : 0,
-            transform:
-              step >= i + 3
-                ? "translateY(0) scale(1)"
-                : "translateY(20px) scale(0.95)",
+            opacity: step >= 1 ? 1 : 0,
+            transform: step >= 1 ? "translateY(0)" : "translateY(20px)",
             transition: "all 1s ease-out",
-            marginBottom: "0.7rem",
-            padding: "0.75rem 1.4rem",
-            background:
-              "linear-gradient(135deg, rgba(232,130,154,0.08) 0%, rgba(194,80,110,0.06) 100%)",
-            border: "1px solid rgba(232,130,154,0.2)",
-            borderRadius: "12px",
-            backdropFilter: "blur(4px)",
-            maxWidth: "420px",
-            width: "100%",
+            marginBottom: "0.4rem",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: "'Great Vibes', Cormorant Garamond, Georgia, serif",
+              fontSize: "clamp(2rem, 6vw, 3.5rem)",
+              color: "#fff4e0",
+              textShadow:
+                "0 2px 10px rgba(0,0,0,0.8), 0 0 25px rgba(232,130,154,0.7)",
+              lineHeight: 1.1,
+              margin: 0,
+            }}
+          >
+            Aapne yes kaha yahooo
+          </h2>
+        </div>
+
+        {/* Divider */}
+        <div
+          style={{
+            opacity: step >= 2 ? 1 : 0,
+            transition: "opacity 1s ease-out",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            width: "200px",
+            margin: "0.4rem 0",
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              height: "1px",
+              background:
+                "linear-gradient(to right, transparent, rgba(232,130,154,0.4))",
+            }}
+          />
+          <span style={{ color: "#e8829a", fontSize: "0.7rem" }}>♡</span>
+          <div
+            style={{
+              flex: 1,
+              height: "1px",
+              background:
+                "linear-gradient(to left, transparent, rgba(232,130,154,0.4))",
+            }}
+          />
+        </div>
+
+        {/* Final line */}
+        <div
+          style={{
+            opacity: step >= 2 ? 1 : 0,
+            transform: step >= 2 ? "translateY(0)" : "translateY(15px)",
+            transition: "all 1.2s ease-out",
           }}
         >
           <p
             style={{
               fontFamily: "Cormorant Garamond, Georgia, serif",
-              fontSize: "clamp(0.9rem, 2.5vw, 1.05rem)",
-              color: "#d4a8b8",
+              fontSize: "clamp(0.95rem, 2.5vw, 1.25rem)",
+              color: "#f4e4c1",
               fontStyle: "italic",
+              letterSpacing: "0.04em",
               margin: 0,
               lineHeight: 1.5,
+              textShadow: "0 2px 6px rgba(0,0,0,0.9)",
             }}
           >
-            <span style={{ marginRight: "0.5rem" }}>{msg.emoji}</span>
-            {msg.text}
+            {COPY.ring.finalLine}
           </p>
         </div>
-      ))}
+      </div>
 
-      {/* Bottom sparkle row */}
+      {/* MIDDLE SPACER: Completely empty, keeps the center viewport transparent for the 3D ring */}
+      <div style={{ flex: 1 }} />
+
+      {/* BOTTOM CARD: Love message items */}
       <div
         style={{
-          opacity: step >= 5 ? 1 : 0,
-          transition: "opacity 1.5s ease-out",
-          marginTop: "1rem",
-          fontSize: "1.2rem",
-          letterSpacing: "0.5rem",
-          color: "#e8829a",
-          filter: "drop-shadow(0 0 8px rgba(232,130,154,0.6))",
-          animation: step >= 5 ? "floatPetal 3s ease-in-out infinite" : "none",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          maxWidth: "460px",
+          padding: "1rem 1.5rem",
+          borderRadius: "20px",
+          background: "rgba(12, 6, 12, 0.65)",
+          border: "1px solid rgba(232, 130, 154, 0.15)",
+          boxShadow: "0 -10px 30px rgba(0, 0, 0, 0.8)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          textAlign: "center",
         }}
       >
-        ♡ ❀ ♡ ❀ ♡
+        {/* One decorative heart */}
+        <div
+          style={{
+            opacity: step >= 3 ? 1 : 0,
+            transform: step >= 3 ? "scale(1)" : "scale(0.7)",
+            transition: "all 1.2s cubic-bezier(0.34,1.56,0.64,1)",
+            marginBottom: "0.5rem",
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <svg
+            viewBox="0 0 100 90"
+            width="44"
+            height="44"
+            style={{
+              filter: "drop-shadow(0 0 10px rgba(232,130,154,0.6))",
+              animation: step >= 3 ? "heartBeat 1.4s ease-in-out infinite" : "none",
+            }}
+          >
+            <defs>
+              <linearGradient id="bigHG" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f9c0d0" />
+                <stop offset="100%" stopColor="#c2506e" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M50 80 C20 60, 5 40, 5 25 C5 10, 18 2, 30 2 C38 2, 45 8, 50 15 C55 8, 62 2, 70 2 C82 2, 95 10, 95 25 C95 40, 80 60, 50 80 Z"
+              fill="url(#bigHG)"
+            />
+          </svg>
+        </div>
+
+        {/* Messages — simple clean text */}
+        {[
+          { emoji: "🌹", text: "Every day with you is a gift I never want to stop unwrapping." },
+          { emoji: "✨", text: "You are my home, my adventure, my forever." },
+          { emoji: "💍", text: "Today, tomorrow, and every day after — it's always you." },
+        ].map((msg, i) => (
+          <div
+            key={i}
+            style={{
+              opacity: step >= i + 3 ? 1 : 0,
+              transform: step >= i + 3 ? "translateY(0)" : "translateY(12px)",
+              transition: "all 0.8s ease-out",
+              marginBottom: "0.45rem",
+              textAlign: "center",
+              width: "100%",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "Cormorant Garamond, Georgia, serif",
+                fontSize: "clamp(0.85rem, 2.4vw, 0.95rem)",
+                color: "#f0d4e0",
+                fontStyle: "italic",
+                margin: 0,
+                lineHeight: 1.5,
+                textShadow: "0 1px 6px rgba(0,0,0,0.9)",
+              }}
+            >
+              <span style={{ marginRight: "0.3rem" }}>{msg.emoji}</span>
+              {msg.text}
+            </p>
+          </div>
+        ))}
+
+        {/* Bottom sparkle row */}
+        <div
+          style={{
+            opacity: step >= 5 ? 1 : 0,
+            transition: "opacity 1.5s ease-out",
+            marginTop: "0.6rem",
+            fontSize: "1rem",
+            letterSpacing: "0.4rem",
+            color: "#e8829a",
+            filter: "drop-shadow(0 0 6px rgba(232,130,154,0.5))",
+            animation: step >= 5 ? "floatPetal 3s ease-in-out infinite" : "none",
+          }}
+        >
+          ♡ ❀ ♡ ❀ ♡
+        </div>
       </div>
     </div>
   );

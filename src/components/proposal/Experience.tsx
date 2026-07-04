@@ -1,7 +1,9 @@
 "use client";
 
-import { Suspense, useMemo, useEffect, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { Canvas } from "@react-three/fiber";
+import { Environment } from "@react-three/drei";
+import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { useProposal } from "./state";
 import { useTimelineController } from "./useTimelineController";
@@ -16,9 +18,16 @@ import { ConfettiBurst } from "./scenes/ConfettiBurst";
 /**
  * Experience — top-level R3F Canvas + scene switching.
  *
- * Renders all scenes simultaneously (mounted as needed) but the camera rig
- * controls what's visible by positioning the camera appropriately per phase.
- * Each scene is conditionally rendered to keep the scene graph light.
+ * Ring scenes get:
+ *   - <Environment preset="studio" /> — gives metal and diamond something to
+ *     reflect, which is the single biggest visual upgrade for PBR materials.
+ *     Without an env map, metalness=1 and transmission look flat regardless of
+ *     how correct the material settings are.
+ *   - <Bloom /> (desktop only) — makes diamond sparkle points and gold
+ *     highlights actually glow instead of just being bright pixels.
+ *
+ * Mobile: Environment still loads (critical for realism) but Bloom is skipped
+ * to avoid GPU overload on weaker devices.
  */
 export function Experience() {
   const phase = useProposal((s) => s.phase);
@@ -27,7 +36,6 @@ export function Experience() {
 
   const [caps] = useState(() => detectCapabilities());
 
-  // Show scenes based on phase
   const showIntro = phase === "intro";
   const showMemories = phase === "memories" || phase === "turn";
   const showTurn = phase === "turn";
@@ -39,27 +47,24 @@ export function Experience() {
     phase === "answered";
   const showConfetti = phase === "answered";
 
-  // Background color — warm slightly during ring scene (PRD §5)
+  // Whether ring environment / post-processing should be active
+  const isRingPhase = showRing;
+
   const bgColor = useMemo(() => {
-    if (phase === "ring-idle" || phase === "ring-open" || phase === "ring-reveal" || phase === "proposal" || phase === "answered") {
-      return new THREE.Color("#1a1410");
-    }
-    if (phase === "turn") {
-      return new THREE.Color("#080608");
-    }
+    if (isRingPhase) return new THREE.Color("#1a1410");
+    if (phase === "turn") return new THREE.Color("#080608");
     return new THREE.Color("#0a0a0f");
-  }, [phase]);
+  }, [phase, isRingPhase]);
 
   return (
     <Canvas
-      // PRD §8: cap DPR at 1.5 on mobile to avoid overheating/lag
       dpr={caps.dprCap}
       gl={{
         antialias: !caps.isMobile,
         alpha: false,
         powerPreference: "high-performance",
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.1,
+        toneMappingExposure: 1.2,
       }}
       camera={{ position: [0, 0, 12], fov: 50, near: 0.1, far: 100 }}
       style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh" }}
@@ -73,11 +78,34 @@ export function Experience() {
         {showIntro && <IntroScene />}
         {showMemories && <MemoryStream />}
         {showTurn && <IntroScene />}
+
         {showRing && (
-          <RingScene />
+          <>
+            {/* Studio HDRI — gives metalness + transmission real reflections.
+                This is the biggest visual upgrade for the ring & diamond. */}
+            <Environment
+              preset="studio"
+              background={false}   // don't replace our dark bg
+              environmentIntensity={1.4}
+            />
+            <RingScene />
+          </>
         )}
+
         {showConfetti && <ConfettiBurst />}
 
+        {/* Bloom post-processing — desktop only for perf.
+            Makes gem sparkles and gold highlights glow visibly. */}
+        {isRingPhase && !caps.isMobile && (
+          <EffectComposer>
+            <Bloom
+              intensity={0.55}
+              luminanceThreshold={0.55}
+              luminanceSmoothing={0.7}
+              mipmapBlur
+            />
+          </EffectComposer>
+        )}
       </Suspense>
     </Canvas>
   );

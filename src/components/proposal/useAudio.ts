@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { Howl } from "howler";
 import { AUDIO } from "@/lib/timeline";
 import { useProposal } from "./state";
@@ -58,7 +58,7 @@ export function useAudioController() {
     _chimeHowl = new Howl({
       src: [AUDIO.chime],
       volume: 0.6,
-      html5: true,
+      html5: false, // use Web Audio API (unlocked at Gate) so it plays reliably inside useEffect
       onloaderror: () => {
         _chimeHowl = null;
       },
@@ -77,49 +77,44 @@ export function useAudioController() {
   }, [audioEnabled]);
 
   const playChime = useCallback(() => {
-    const bg = _bgHowl;
-    const audioEnabled = useProposal.getState().audioEnabled;
-    if (!audioEnabled) return;
+    if (!useProposal.getState().audioEnabled) return;
 
-    // Fade background completely out before chime starts
+    const bg = _bgHowl;
+    const chime = _chimeHowl;
+
+    // Duck background to near-silent so chime is clearly audible
     if (bg) {
       const originalVol = bg.volume();
-      bg.fade(originalVol, 0, 600); // smooth 0.6s fade out
+      bg.fade(originalVol, 0.05, 500);
 
-      // Create a fresh chime each time (prevents overlap issues)
-      const chime = new Howl({
-        src: [AUDIO.chime],
-        volume: 0,
-        html5: true,
-        onloaderror: () => {
-          // Chime missing — just restore background
-          if (bg) bg.fade(0, originalVol, 800);
-        },
-        onend: () => {
-          // Chime finished — fade background back in smoothly
+      // Restore bg when chime ends
+      if (chime) {
+        const restoreBg = () => {
           if (bg && useProposal.getState().audioEnabled) {
-            bg.fade(bg.volume(), originalVol, 1800);
+            bg.fade(bg.volume(), originalVol, 2000);
           }
-        },
-      });
+          chime.off("end", restoreBg);
+        };
+        chime.off("end", restoreBg); // remove any stale listener first
+        chime.on("end", restoreBg);
 
-      // Start chime after background has faded
-      setTimeout(() => {
-        if (!useProposal.getState().audioEnabled) {
-          // User muted during fade — just restore bg silently
-          return;
-        }
-        chime.volume(0);
+        // Play the pre-loaded chime singleton
+        chime.stop();
+        chime.volume(0.75);
         chime.play();
-        chime.fade(0, 0.75, 300); // fade chime in
-      }, 500);
-
-    } else {
-      // No background — play chime directly
-      if (_chimeHowl) {
-        _chimeHowl.stop();
-        _chimeHowl.play();
+      } else {
+        // Chime not available — just restore bg after a delay
+        setTimeout(() => {
+          if (bg && useProposal.getState().audioEnabled) {
+            bg.fade(bg.volume(), originalVol, 1500);
+          }
+        }, 8000);
       }
+    } else if (chime) {
+      // No background — play chime directly
+      chime.stop();
+      chime.volume(0.75);
+      chime.play();
     }
   }, []);
 
