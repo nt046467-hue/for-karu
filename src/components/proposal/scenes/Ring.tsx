@@ -121,9 +121,9 @@ export function Ring({ revealed = false }: RingProps) {
   const goldMaterial = useMemo(() => {
     return new THREE.MeshPhysicalMaterial({
       color: new THREE.Color(GOLD_COLOR),
-      metalness: 1.0,
-      roughness: 0.2,
-      envMapIntensity: 2.0,
+      metalness: 0.8,
+      roughness: 0.3,
+      envMapIntensity: 1.0,
       clearcoat: 0.3,
       clearcoatRoughness: 0.1,
     });
@@ -131,18 +131,20 @@ export function Ring({ revealed = false }: RingProps) {
 
   const diamondMaterial = useMemo(() => {
     if (caps.useTransmission) {
-      // Full PBR spec from PRD §4.2 — real diamond IOR
+      // Full PBR spec from PRD §4.2 — optimized to work with/without envMap
       return new THREE.MeshPhysicalMaterial({
         color: new THREE.Color("#ffffff"),
-        metalness: 0,
-        roughness: 0,
-        transmission: 1.0,
+        emissive: new THREE.Color("#111111"), // subtle self-glow to stand out
+        metalness: 0.1,
+        roughness: 0.1,
+        transmission: 0.6, // reduced from 1.0 so it is visible even without envMap
         thickness: 0.5,
         ior: 2.4, // diamond's real index of refraction
-        clearcoat: 1,
-        clearcoatRoughness: 0,
-        envMapIntensity: 2,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.1,
+        envMapIntensity: 1.5,
         transparent: true,
+        opacity: 0.9,
       });
     }
     // Mobile fallback — fake glass with iridescent white

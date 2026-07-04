@@ -66,7 +66,7 @@ export function Experience() {
       style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh" }}
     >
       <color attach="background" args={[bgColor]} />
-      <fog attach="fog" args={[bgColor, 8, 30]} />
+      <fog attach="fog" args={[bgColor, 8, 120]} />
 
       <Suspense fallback={null}>
         <CameraRig />

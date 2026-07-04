@@ -114,6 +114,10 @@ export function MemoryStream() {
 
   return (
     <group ref={groupRef}>
+      {/* Lighting for the memory stream photo planes */}
+      <ambientLight intensity={1.5} />
+      <directionalLight position={[2, 5, 5]} intensity={1.8} color="#fff4e0" />
+      
       {PHOTOS.map((p, i) => (
         <PhotoPlane
           key={i}

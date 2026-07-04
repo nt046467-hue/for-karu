@@ -30,26 +30,37 @@ export function Overlay() {
 
   return (
     <>
-      {/* Persistent 2D layer */}
-      <div className="pointer-events-none fixed inset-0 z-10 flex items-center justify-center">
-        {phase === "gate" && <GateScreen onOpen={() => {
-          start();
-        }} />}
-
-        {phase === "intro" && <IntroText />}
-
-        {phase === "turn" && <TurnText />}
-
-        {phase === "ring-idle" && <RingIdlePrompt onTap={() => {
-          setPhase("ring-open");
-        }} />}
-
-        {phase === "proposal" && (
-          <ProposalUI
-            onYes={() => setPhase("answered")}
+      {/* Persistent 2D layer — full screen, centered, all inline styles (no Tailwind) */}
+      <div
+        style={{
+          pointerEvents: "none",
+          position: "fixed",
+          inset: 0,
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {phase === "gate" && (
+          <GateScreen
+            onOpen={() => {
+              start();
+            }}
           />
         )}
-
+        {phase === "intro" && <IntroText />}
+        {phase === "turn" && <TurnText />}
+        {phase === "ring-idle" && (
+          <RingIdlePrompt
+            onTap={() => {
+              setPhase("ring-open");
+            }}
+          />
+        )}
+        {phase === "proposal" && (
+          <ProposalUI onYes={() => setPhase("answered")} />
+        )}
         {phase === "answered" && <AnsweredScreen />}
       </div>
 
@@ -63,16 +74,31 @@ export function Overlay() {
 
 function GateScreen({ onOpen }: { onOpen: () => void }) {
   const [mounted, setMounted] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 100);
+    const t = setTimeout(() => setMounted(true), 150);
     return () => clearTimeout(t);
   }, []);
 
   return (
-    <div className="pointer-events-auto flex flex-col items-center gap-8 px-6 text-center">
-
-      {/* Floating rose petals / sparkles decoration */}
+    <div
+      style={{
+        pointerEvents: "auto",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "0",
+        textAlign: "center",
+        width: "100vw",
+        height: "100vh",
+        padding: "2rem",
+        boxSizing: "border-box",
+        position: "relative",
+      }}
+    >
+      {/* Floating rose petal background decoration */}
       <div
         style={{
           position: "absolute",
@@ -81,19 +107,18 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
           overflow: "hidden",
         }}
       >
-        {[...Array(12)].map((_, i) => (
+        {[...Array(16)].map((_, i) => (
           <span
             key={i}
             style={{
               position: "absolute",
-              left: `${8 + i * 7.5}%`,
-              top: `${10 + (i % 4) * 20}%`,
-              fontSize: i % 3 === 0 ? "1.2rem" : i % 3 === 1 ? "0.8rem" : "1rem",
-              opacity: 0.15 + (i % 5) * 0.06,
-              animation: `floatPetal ${3 + i * 0.4}s ease-in-out infinite`,
-              animationDelay: `${i * 0.3}s`,
-              color: "#e8829a",
-              filter: "blur(0.5px)",
+              left: `${5 + i * 5.8}%`,
+              top: `${8 + (i % 5) * 18}%`,
+              fontSize: i % 3 === 0 ? "1.4rem" : i % 3 === 1 ? "0.9rem" : "1.1rem",
+              opacity: 0.1 + (i % 5) * 0.05,
+              animation: `floatPetal ${4 + (i % 5) * 0.6}s ease-in-out infinite`,
+              animationDelay: `${(i * 0.4) % 3}s`,
+              color: i % 2 === 0 ? "#e8829a" : "#f9d4c8",
               userSelect: "none",
             }}
           >
@@ -102,24 +127,26 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
         ))}
       </div>
 
-      {/* Heart icon above title */}
+      {/* Big glowing heart */}
       <div
         style={{
+          marginBottom: "1.5rem",
           opacity: mounted ? 1 : 0,
-          transform: mounted ? "scale(1) translateY(0)" : "scale(0.5) translateY(20px)",
+          transform: mounted ? "scale(1)" : "scale(0.4)",
           transition: "opacity 1.2s ease-out, transform 1.2s cubic-bezier(0.34,1.56,0.64,1)",
           transitionDelay: "0.2s",
         }}
       >
         <svg
-          width="54"
-          height="54"
+          width="80"
+          height="80"
           viewBox="0 0 54 54"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           style={{
-            filter: "drop-shadow(0 0 18px rgba(232,130,154,0.7)) drop-shadow(0 0 36px rgba(232,130,154,0.3))",
-            animation: "heartBeat 2.4s ease-in-out infinite",
+            filter:
+              "drop-shadow(0 0 24px rgba(232,130,154,0.9)) drop-shadow(0 0 50px rgba(232,130,154,0.4))",
+            animation: "heartBeat 2s ease-in-out infinite",
           }}
         >
           <defs>
@@ -133,7 +160,6 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
             d="M27 46s-18-11-18-23a11 11 0 0 1 18-8.5A11 11 0 0 1 45 23c0 12-18 23-18 23z"
             fill="url(#hg)"
           />
-          {/* Inner highlight */}
           <path
             d="M22 18c-2.5 1-4.5 3.5-5 6"
             stroke="rgba(255,255,255,0.4)"
@@ -143,11 +169,12 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
         </svg>
       </div>
 
-      {/* Main title */}
+      {/* Title: For Karu */}
       <div
         style={{
+          marginBottom: "0.6rem",
           opacity: mounted ? 1 : 0,
-          transform: mounted ? "translateY(0)" : "translateY(24px)",
+          transform: mounted ? "translateY(0)" : "translateY(30px)",
           transition: "opacity 1.4s ease-out, transform 1.4s ease-out",
           transitionDelay: "0.5s",
         }}
@@ -155,19 +182,20 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
         <h1
           style={{
             fontFamily: "'Great Vibes', 'Cormorant Garamond', Georgia, serif",
-            fontSize: "clamp(3rem, 10vw, 5.5rem)",
+            fontSize: "clamp(3.5rem, 12vw, 7rem)",
             color: "#fff4e0",
             letterSpacing: "0.04em",
             lineHeight: 1.1,
+            margin: 0,
             textShadow:
-              "0 0 30px rgba(244,228,193,0.6), 0 0 60px rgba(232,130,154,0.3), 0 2px 4px rgba(0,0,0,0.8)",
+              "0 0 40px rgba(244,228,193,0.7), 0 0 80px rgba(232,130,154,0.35), 0 3px 6px rgba(0,0,0,0.9)",
           }}
         >
           {COPY.gate.title}
         </h1>
       </div>
 
-      {/* Decorative divider */}
+      {/* Divider */}
       <div
         style={{
           opacity: mounted ? 1 : 0,
@@ -176,8 +204,8 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
           display: "flex",
           alignItems: "center",
           gap: "12px",
-          width: "100%",
-          maxWidth: "280px",
+          width: "260px",
+          margin: "0.8rem 0",
         }}
       >
         <div
@@ -187,7 +215,7 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
             background: "linear-gradient(to right, transparent, rgba(232,130,154,0.5))",
           }}
         />
-        <span style={{ color: "#e8829a", fontSize: "1rem", opacity: 0.8 }}>♡</span>
+        <span style={{ color: "#e8829a", fontSize: "1.2rem", opacity: 0.9 }}>♡</span>
         <div
           style={{
             flex: 1,
@@ -200,99 +228,103 @@ function GateScreen({ onOpen }: { onOpen: () => void }) {
       {/* Subtitle */}
       <div
         style={{
+          marginBottom: "2.5rem",
           opacity: mounted ? 1 : 0,
-          transform: mounted ? "translateY(0)" : "translateY(16px)",
+          transform: mounted ? "translateY(0)" : "translateY(20px)",
           transition: "opacity 1.2s ease-out, transform 1.2s ease-out",
-          transitionDelay: "1s",
+          transitionDelay: "1.1s",
         }}
       >
         <p
           style={{
-            fontFamily: "Cormorant Garamond, Georgia, serif",
-            fontSize: "clamp(1rem, 3vw, 1.3rem)",
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: "clamp(1.1rem, 3.5vw, 1.5rem)",
             color: "#d4a8b8",
             fontStyle: "italic",
             letterSpacing: "0.06em",
-            textShadow: "0 0 20px rgba(0,0,0,0.9)",
+            margin: 0,
+            textShadow: "0 0 30px rgba(0,0,0,0.95), 0 0 60px rgba(0,0,0,0.7)",
           }}
         >
           {COPY.gate.subtitle}
         </p>
       </div>
 
-      {/* Open button */}
+      {/* BIG centered romantic button */}
       <div
         style={{
           opacity: mounted ? 1 : 0,
-          transform: mounted ? "translateY(0)" : "translateY(20px)",
-          transition: "opacity 1.2s ease-out, transform 1.2s ease-out",
-          transitionDelay: "1.4s",
+          transform: mounted ? "scale(1) translateY(0)" : "scale(0.8) translateY(20px)",
+          transition: "opacity 1.4s ease-out, transform 1.4s cubic-bezier(0.34,1.56,0.64,1)",
+          transitionDelay: "1.5s",
         }}
       >
         <button
           onClick={onOpen}
-          className="group"
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
           style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.6rem",
             position: "relative",
-            padding: "0.9rem 4rem",
-            fontFamily: "Cormorant Garamond, Georgia, serif",
-            fontSize: "1.15rem",
+            padding: "1.2rem 5rem",
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: "clamp(1.2rem, 3vw, 1.6rem)",
             fontStyle: "italic",
-            letterSpacing: "0.18em",
+            letterSpacing: "0.15em",
             color: "#fff4e0",
-            background: "linear-gradient(135deg, rgba(232,130,154,0.18) 0%, rgba(194,80,110,0.12) 100%)",
-            border: "1px solid rgba(232,130,154,0.45)",
+            background: hovered
+              ? "linear-gradient(135deg, #f9d4c8 0%, #e8829a 50%, #c2506e 100%)"
+              : "linear-gradient(135deg, rgba(232,130,154,0.22) 0%, rgba(194,80,110,0.15) 100%)",
+            border: hovered
+              ? "1px solid rgba(255,255,255,0.4)"
+              : "1px solid rgba(232,130,154,0.5)",
             borderRadius: "9999px",
             cursor: "pointer",
-            backdropFilter: "blur(4px)",
-            boxShadow:
-              "0 0 30px rgba(232,130,154,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
-            transition: "all 0.45s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background =
-              "linear-gradient(135deg, rgba(232,130,154,0.32) 0%, rgba(194,80,110,0.22) 100%)";
-            e.currentTarget.style.boxShadow =
-              "0 0 50px rgba(232,130,154,0.4), 0 0 90px rgba(232,130,154,0.15), inset 0 1px 0 rgba(255,255,255,0.12)";
-            e.currentTarget.style.borderColor = "rgba(232,130,154,0.8)";
-            e.currentTarget.style.transform = "scale(1.04)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background =
-              "linear-gradient(135deg, rgba(232,130,154,0.18) 0%, rgba(194,80,110,0.12) 100%)";
-            e.currentTarget.style.boxShadow =
-              "0 0 30px rgba(232,130,154,0.15), inset 0 1px 0 rgba(255,255,255,0.08)";
-            e.currentTarget.style.borderColor = "rgba(232,130,154,0.45)";
-            e.currentTarget.style.transform = "scale(1)";
+            backdropFilter: "blur(8px)",
+            boxShadow: hovered
+              ? "0 0 60px rgba(232,130,154,0.7), 0 0 120px rgba(232,130,154,0.3), inset 0 1px 0 rgba(255,255,255,0.2)"
+              : "0 0 35px rgba(232,130,154,0.2), inset 0 1px 0 rgba(255,255,255,0.06)",
+            transform: hovered ? "scale(1.06)" : "scale(1)",
+            transition: "all 0.4s cubic-bezier(0.34,1.56,0.64,1)",
+            animation: "heartBeat 3s ease-in-out infinite",
           }}
         >
-          {COPY.gate.button}
+          <span style={{ fontSize: "1.3rem" }}>♡</span>
+          <span style={{ color: hovered ? "#2a0a14" : "#fff4e0" }}>{COPY.gate.button}</span>
+          <span style={{ fontSize: "1.3rem" }}>♡</span>
         </button>
       </div>
 
       {/* Sound hint */}
       <div
         style={{
-          opacity: mounted ? 0.5 : 0,
-          transition: "opacity 1.2s ease-out",
-          transitionDelay: "1.8s",
+          marginTop: "1.8rem",
+          opacity: mounted ? 0.45 : 0,
+          transition: "opacity 1.4s ease-out",
+          transitionDelay: "2s",
         }}
       >
         <p
           style={{
             fontFamily: "Inter, sans-serif",
-            fontSize: "0.72rem",
+            fontSize: "0.7rem",
             color: "#8a7060",
-            letterSpacing: "0.15em",
+            letterSpacing: "0.18em",
             textTransform: "uppercase",
+            margin: 0,
           }}
         >
-          🎵 Best with sound on · Tap to begin
+          🎵 Best with sound on
         </p>
       </div>
     </div>
   );
 }
+
+
 
 // ---------- Scene 1: Intro text ----------
 
@@ -307,20 +339,31 @@ function IntroText() {
   }, []);
 
   return (
-    <div className="flex max-w-2xl flex-col items-center gap-6 px-6 text-center">
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "1.5rem",
+        padding: "1.5rem",
+        textAlign: "center",
+        maxWidth: "680px",
+        width: "100%",
+      }}
+    >
       {COPY.intro.lines.map((line, i) => (
         <p
           key={i}
-          className={cn(
-            "text-xl sm:text-2xl md:text-3xl transition-opacity duration-[2500ms]",
-            i < visibleLines ? "opacity-100" : "opacity-0"
-          )}
           style={{
             fontFamily: "Cormorant Garamond, Georgia, serif",
+            fontSize: "clamp(1.2rem, 3.5vw, 2rem)",
             color: "#f4e4c1",
             fontStyle: "italic",
-            textShadow: "0 0 12px rgba(0, 0, 0, 0.6)",
-            lineHeight: 1.4,
+            textShadow: "0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)",
+            lineHeight: 1.5,
+            margin: 0,
+            opacity: i < visibleLines ? 1 : 0,
+            transition: "opacity 2.5s ease-out",
           }}
         >
           {line}
@@ -343,22 +386,31 @@ function TurnText() {
   }, []);
 
   return (
-    <div className="flex max-w-2xl flex-col items-center gap-8 px-6 text-center">
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "2rem",
+        padding: "1.5rem",
+        textAlign: "center",
+        maxWidth: "680px",
+        width: "100%",
+      }}
+    >
       {COPY.turn.lines.map((line, i) => (
         <p
           key={i}
-          className={cn(
-            "transition-opacity duration-[3000ms]",
-            i === 0 && "text-lg sm:text-xl md:text-2xl",
-            i === 1 && "text-3xl sm:text-4xl md:text-5xl",
-            i < visibleLines ? "opacity-100" : "opacity-0"
-          )}
           style={{
             fontFamily: i === 1 ? "'Great Vibes', Cormorant Garamond, Georgia, serif" : "Cormorant Garamond, Georgia, serif",
+            fontSize: i === 1 ? "clamp(2.5rem, 8vw, 5rem)" : "clamp(1rem, 2.5vw, 1.4rem)",
             color: i === 1 ? "#fff4e0" : "#a89a85",
             fontStyle: i === 1 ? "normal" : "italic",
-            textShadow: "0 0 16px rgba(0, 0, 0, 0.7)",
+            textShadow: "0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.5)",
             letterSpacing: i === 1 ? "0.04em" : "0.02em",
+            margin: 0,
+            opacity: i < visibleLines ? 1 : 0,
+            transition: "opacity 3s ease-out",
           }}
         >
           {line}
@@ -372,14 +424,27 @@ function TurnText() {
 
 function RingIdlePrompt({ onTap }: { onTap: () => void }) {
   return (
-    <div className="pointer-events-auto absolute bottom-[15vh] flex flex-col items-center gap-3">
+    <div
+      style={{
+        pointerEvents: "auto",
+        position: "absolute",
+        bottom: "12vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "1rem",
+      }}
+    >
       <p
-        className="animate-pulse text-base sm:text-lg"
         style={{
           fontFamily: "Cormorant Garamond, Georgia, serif",
+          fontSize: "clamp(1rem, 3vw, 1.4rem)",
           color: "#f4e4c1",
           fontStyle: "italic",
           letterSpacing: "0.1em",
+          margin: 0,
+          animation: "heartBeat 2s ease-in-out infinite",
+          textShadow: "0 0 20px rgba(232,130,154,0.4)",
         }}
       >
         {COPY.ring.openPrompt}
@@ -387,18 +452,34 @@ function RingIdlePrompt({ onTap }: { onTap: () => void }) {
       <button
         onClick={onTap}
         aria-label="Open the box"
-        className="pointer-events-auto h-16 w-16 rounded-full border border-[#e8829a]/40 transition-all duration-300 hover:scale-110 hover:border-[#e8829a]/80"
         style={{
-          background: "radial-gradient(circle, rgba(232,130,154,0.18) 0%, transparent 70%)",
-          boxShadow: "0 0 24px rgba(232,130,154,0.2)",
+          width: "72px",
+          height: "72px",
+          borderRadius: "50%",
+          border: "1.5px solid rgba(232,130,154,0.5)",
+          background: "radial-gradient(circle, rgba(232,130,154,0.2) 0%, transparent 70%)",
+          boxShadow: "0 0 30px rgba(232,130,154,0.3), 0 0 60px rgba(232,130,154,0.1)",
+          cursor: "pointer",
+          transition: "all 0.3s ease",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "2rem",
+          color: "#e8829a",
+          filter: "drop-shadow(0 0 10px rgba(232,130,154,0.7))",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "scale(1.15)";
+          e.currentTarget.style.borderColor = "rgba(232,130,154,0.9)";
+          e.currentTarget.style.boxShadow = "0 0 50px rgba(232,130,154,0.6), 0 0 100px rgba(232,130,154,0.2)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "scale(1)";
+          e.currentTarget.style.borderColor = "rgba(232,130,154,0.5)";
+          e.currentTarget.style.boxShadow = "0 0 30px rgba(232,130,154,0.3), 0 0 60px rgba(232,130,154,0.1)";
         }}
       >
-        <span
-          className="text-2xl"
-          style={{ color: "#e8829a", filter: "drop-shadow(0 0 8px rgba(232,130,154,0.6))" }}
-        >
-          ♡
-        </span>
+        ♡
       </button>
     </div>
   );
@@ -452,24 +533,36 @@ function ProposalUI({ onYes }: { onYes: () => void }) {
   };
 
   return (
-    <div className="pointer-events-auto absolute bottom-[10vh] flex w-full flex-col items-center gap-8 px-6">
+    <div
+      style={{
+        pointerEvents: "auto",
+        position: "absolute",
+        bottom: "8vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "2rem",
+        padding: "0 1.5rem",
+        width: "100%",
+      }}
+    >
       <h2
-        key="proposal-line"
-        className="animate-[fadeIn_2s_ease-out] text-center"
         style={{
           fontFamily: "'Great Vibes', Cormorant Garamond, Georgia, serif",
           fontSize: "clamp(2rem, 6vw, 3.5rem)",
           color: "#fff4e0",
-          textShadow:
-            "0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(232,130,154,0.35)",
+          textShadow: "0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(232,130,154,0.35)",
           letterSpacing: "0.03em",
           lineHeight: 1.3,
+          margin: 0,
+          textAlign: "center",
+          animation: "fadeIn 2s ease-out",
         }}
       >
         {COPY.ring.proposal}
       </h2>
 
-      <div className="relative flex items-center justify-center gap-6">
+      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", gap: "1.5rem" }}>
         <button
           ref={yesPulseRef}
           onClick={onYes}
@@ -743,9 +836,32 @@ function MuteToggle() {
     <button
       onClick={toggleAudio}
       aria-label={audioEnabled ? "Mute" : "Unmute"}
-      className="pointer-events-auto fixed right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-[#e8829a]/20 bg-black/40 backdrop-blur-sm transition-all hover:border-[#e8829a]/60"
       style={{
-        boxShadow: "0 0 12px rgba(232,130,154,0.08)",
+        pointerEvents: "auto",
+        position: "fixed",
+        right: "1rem",
+        top: "1rem",
+        zIndex: 20,
+        display: "flex",
+        height: "40px",
+        width: "40px",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: "50%",
+        border: "1px solid rgba(232,130,154,0.25)",
+        background: "rgba(0,0,0,0.45)",
+        backdropFilter: "blur(6px)",
+        boxShadow: "0 0 14px rgba(232,130,154,0.1)",
+        cursor: "pointer",
+        transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "rgba(232,130,154,0.7)";
+        e.currentTarget.style.boxShadow = "0 0 20px rgba(232,130,154,0.3)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "rgba(232,130,154,0.25)";
+        e.currentTarget.style.boxShadow = "0 0 14px rgba(232,130,154,0.1)";
       }}
     >
       <svg
